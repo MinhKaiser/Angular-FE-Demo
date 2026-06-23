@@ -6,14 +6,15 @@
     "rootDir": "./src",
     "outDir": "./out-tsc/app",
     "types": [],
-    "baseUrl": "./src",
+    "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "paths": {
-      "@core": ["app/core"],
-      "@core/*": ["app/core/*"],
-      "@shared": ["app/shared"],
-      "@shared/*": ["app/shared/*"],
-      "@features": ["app/features"],
-      "@features/*": ["app/features/*"]
+      "@core": ["src/app/core"],
+      "@core/*": ["src/app/core/*"],
+      "@shared": ["src/app/shared"],
+      "@shared/*": ["src/app/shared/*"],
+      "@features": ["src/app/features"],
+      "@features/*": ["src/app/features/*"]
     }
   },
   "include": [

@@ -5,9 +5,9 @@ import { User, LoginRequest, LoginResponse, AuthState } from '@shared/models';
 import { getEnvironmentConfig } from './environment.service';
 
 /**
- * Authentication Service
- * Manages user authentication, tokens, and session
- * Uses DummyJSON API: https://dummyjson.com/docs/auth
+ * Dịch vụ xác thực
+ * Quản lý đăng nhập, token và phiên làm việc
+ * Sử dụng API DummyJSON: https://dummyjson.com/docs/auth
  */
 @Injectable({
   providedIn: 'root',
@@ -25,7 +25,7 @@ export class AuthService {
     error: null,
   });
 
-  // Computed signals for reactive state
+  // Các computed signal cho trạng thái phản ứng
   readonly user = computed(() => this.authState().user);
   readonly isAuthenticated = computed(() => this.authState().isAuthenticated);
   readonly isLoading = computed(() => this.authState().isLoading);
@@ -35,10 +35,7 @@ export class AuthService {
     this.checkTokenValidity();
   }
 
-  /**
-   * Login user with credentials
-   * POST /auth/login
-   */
+  // Đăng nhập với thông tin đăng nhập (POST /auth/login)
   login(credentials: LoginRequest): Observable<LoginResponse> {
     this.authState.update(state => ({ ...state, isLoading: true, error: null }));
 
