@@ -24,12 +24,7 @@ yarn-debug.log*
 *.sublime-workspace
 
 # Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/mcp.json
+.vscode/
 .history/*
 
 # Miscellaneous
@@ -46,6 +41,9 @@ test-results/
 
 # Local training/reference documents
 /TaiLieuBE.txt
+/ARCHITECTURE.md
+/CONTRIBUTING.md
+/SECURITY.md
 /docs-local/
 *.local.md
 *.notes.md
@@ -63,7 +61,7 @@ Thumbs.db
 .env.*
 .env.*.local
 .env.production
-!.env.example
+.env.example
 
 # OS & Editor
 *.swp
