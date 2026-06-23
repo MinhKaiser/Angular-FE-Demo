@@ -1,7 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Post, PostsResponse, Comment, CommentsResponse } from '@shared/models';
-import { HttpClientService, PaginationOptions } from './http-client.service';
+import {
+  CommentsResponse,
+  CreatePostRequest,
+  DeletedPost,
+  PaginationQuery,
+  Post,
+  PostsResponse,
+  PostTag,
+  UpdatePostRequest,
+} from '@shared/models';
+import { HttpClientService } from './http-client.service';
 
 @Injectable({
   providedIn: 'root',
@@ -9,35 +18,50 @@ import { HttpClientService, PaginationOptions } from './http-client.service';
 export class PostService {
   constructor(private httpClient: HttpClientService) {}
 
-  getAllPosts(options?: PaginationOptions): Observable<PostsResponse> {
-    return this.httpClient.get<PostsResponse>('/posts', options);
+  getPosts(query?: PaginationQuery): Observable<PostsResponse> {
+    return this.httpClient.get<PostsResponse>('/posts', query);
   }
 
-  getPostById(id: number, options?: PaginationOptions): Observable<Post> {
-    return this.httpClient.get<Post>(`/posts/${id}`, options);
+  getPost(id: number): Observable<Post> {
+    return this.httpClient.get<Post>(`/posts/${id}`);
   }
 
-  searchPosts(query: string, options?: PaginationOptions): Observable<PostsResponse> {
-    return this.httpClient.get<PostsResponse>(`/posts/search?q=${query}`, options);
+  searchPosts(searchTerm: string, query?: PaginationQuery): Observable<PostsResponse> {
+    return this.httpClient.get<PostsResponse>('/posts/search', {
+      ...query,
+      q: searchTerm.trim(),
+    });
   }
 
-  getPostsByUserId(userId: number, options?: PaginationOptions): Observable<PostsResponse> {
-    return this.httpClient.get<PostsResponse>(`/posts/user/${userId}`, options);
+  getPostTags(): Observable<PostTag[]> {
+    return this.httpClient.get<PostTag[]>('/posts/tags');
   }
 
-  getCommentsByPostId(postId: number, options?: PaginationOptions): Observable<CommentsResponse> {
-    return this.httpClient.get<CommentsResponse>(`/posts/${postId}/comments`, options);
+  getPostTagList(): Observable<string[]> {
+    return this.httpClient.get<string[]>('/posts/tag-list');
   }
 
-  addPost(post: Omit<Post, 'id'>): Observable<Post> {
-    return this.httpClient.post<Post>('/posts/add', post);
+  getPostsByTag(tagSlug: string, query?: PaginationQuery): Observable<PostsResponse> {
+    return this.httpClient.get<PostsResponse>(`/posts/tag/${tagSlug}`, query);
   }
 
-  updatePost(id: number, post: Partial<Post>): Observable<Post> {
-    return this.httpClient.put<Post>(`/posts/${id}`, post);
+  getPostsByUser(userId: number, query?: PaginationQuery): Observable<PostsResponse> {
+    return this.httpClient.get<PostsResponse>(`/posts/user/${userId}`, query);
   }
 
-  deletePost(id: number): Observable<any> {
-    return this.httpClient.delete(`/posts/${id}`);
+  getPostComments(postId: number, query?: PaginationQuery): Observable<CommentsResponse> {
+    return this.httpClient.get<CommentsResponse>(`/posts/${postId}/comments`, query);
+  }
+
+  addPost(post: CreatePostRequest): Observable<Post> {
+    return this.httpClient.post<Post, CreatePostRequest>('/posts/add', post);
+  }
+
+  updatePost(id: number, post: UpdatePostRequest): Observable<Post> {
+    return this.httpClient.patch<Post, UpdatePostRequest>(`/posts/${id}`, post);
+  }
+
+  deletePost(id: number): Observable<DeletedPost> {
+    return this.httpClient.delete<DeletedPost>(`/posts/${id}`);
   }
 }

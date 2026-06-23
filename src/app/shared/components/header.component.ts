@@ -1,73 +1,63 @@
 import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@core/services';
-import { Component, OnInit, inject } from '@angular/core';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
-    <nav class="bg-white shadow-md sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <!-- Logo -->
-          <div class="flex items-center">
-            <a routerLink="/" class="flex items-center gap-2">
-              <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg"></div>
-              <span class="text-xl font-bold text-gray-900">Store</span>
-            </a>
-          </div>
+    <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <a routerLink="/" class="flex items-center gap-3">
+          <span class="flex h-9 w-9 items-center justify-center rounded-md bg-slate-950 text-sm font-bold text-white">DJ</span>
+          <span class="text-lg font-bold text-slate-950">Dummy Shop</span>
+        </a>
 
-          <!-- Nav Links -->
-          <div class="flex items-center gap-8">
-            <a routerLink="/products" routerLinkActive="text-blue-600" class="text-gray-700 hover:text-blue-600 transition">
-              Products
-            </a>
-            <a routerLink="/posts" routerLinkActive="text-blue-600" class="text-gray-700 hover:text-blue-600 transition">
-              Posts
-            </a>
-            <a routerLink="/todos" routerLinkActive="text-blue-600" class="text-gray-700 hover:text-blue-600 transition">
-              Todos
-            </a>
-          </div>
-
-          <!-- Right Side -->
-          <div class="flex items-center gap-4">
-            <ng-container *ngIf="isAuthenticated()">
-              <span class="text-sm text-gray-600">{{ username }}</span>
-              <button (click)="onLogout()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
-                Logout
-              </button>
-            </ng-container>
-            <ng-container *ngIf="!isAuthenticated()">
-              <a routerLink="/auth/login" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                Sign In
-              </a>
-            </ng-container>
-          </div>
+        <div class="hidden items-center gap-6 md:flex">
+          <a routerLink="/products" routerLinkActive="text-blue-700" class="text-sm font-medium text-slate-600 transition hover:text-blue-700">
+            Products
+          </a>
+          <a routerLink="/posts" routerLinkActive="text-emerald-700" class="text-sm font-medium text-slate-600 transition hover:text-emerald-700">
+            Posts
+          </a>
+          <a routerLink="/todos" routerLinkActive="text-violet-700" class="text-sm font-medium text-slate-600 transition hover:text-violet-700">
+            Todos
+          </a>
         </div>
-      </div>
-    </nav>
+
+        <div class="flex items-center gap-3">
+          <ng-container *ngIf="isAuthenticated(); else signInLink">
+            <span class="hidden max-w-40 truncate text-sm text-slate-600 sm:inline">{{ displayName() }}</span>
+            <button
+              type="button"
+              (click)="onLogout()"
+              class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Logout
+            </button>
+          </ng-container>
+
+          <ng-template #signInLink>
+            <a routerLink="/auth/login" class="rounded-md bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+              Sign in
+            </a>
+          </ng-template>
+        </div>
+      </nav>
+    </header>
   `,
 })
-export class HeaderComponent implements OnInit {
-  private authService = inject(AuthService);
-  private router = inject(Router);
+export class HeaderComponent {
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
-  isAuthenticated = this.authService.isAuthenticated;
-  username = '';
-
-  ngOnInit(): void {
-    const user = this.authService.user();
-    if (user) {
-      this.username = `${user.firstName} ${user.lastName}`;
-    }
-  }
+  readonly isAuthenticated = this.authService.isAuthenticated;
+  readonly displayName = this.authService.displayName;
 
   onLogout(): void {
-    this.authService.logout().subscribe(() => {
-      this.router.navigate(['/auth/login']);
-    });
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 }

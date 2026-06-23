@@ -1,7 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Todo, TodosResponse } from '@shared/models';
-import { HttpClientService, PaginationOptions } from './http-client.service';
+import {
+  CreateTodoRequest,
+  DeletedTodo,
+  PaginationQuery,
+  Todo,
+  TodosResponse,
+  UpdateTodoRequest,
+} from '@shared/models';
+import { HttpClientService } from './http-client.service';
 
 @Injectable({
   providedIn: 'root',
@@ -9,31 +16,35 @@ import { HttpClientService, PaginationOptions } from './http-client.service';
 export class TodoService {
   constructor(private httpClient: HttpClientService) {}
 
-  getAllTodos(options?: PaginationOptions): Observable<TodosResponse> {
-    return this.httpClient.get<TodosResponse>('/todos', options);
+  getTodos(query?: PaginationQuery): Observable<TodosResponse> {
+    return this.httpClient.get<TodosResponse>('/todos', query);
   }
 
-  getTodoById(id: number): Observable<Todo> {
+  getTodo(id: number): Observable<Todo> {
     return this.httpClient.get<Todo>(`/todos/${id}`);
   }
 
-  getTodosByUserId(userId: number, options?: PaginationOptions): Observable<TodosResponse> {
-    return this.httpClient.get<TodosResponse>(`/todos/user/${userId}`, options);
+  getTodosByUser(userId: number, query?: PaginationQuery): Observable<TodosResponse> {
+    return this.httpClient.get<TodosResponse>(`/todos/user/${userId}`, query);
   }
 
   getRandomTodos(length: number = 1): Observable<Todo | Todo[]> {
-    return this.httpClient.get<Todo | Todo[]>(`/todos/random/${length}`);
+    if (length <= 1) {
+      return this.httpClient.get<Todo>('/todos/random');
+    }
+
+    return this.httpClient.get<Todo[]>(`/todos/random/${Math.min(length, 10)}`);
   }
 
-  addTodo(todo: Omit<Todo, 'id'>): Observable<Todo> {
-    return this.httpClient.post<Todo>('/todos/add', todo);
+  addTodo(todo: CreateTodoRequest): Observable<Todo> {
+    return this.httpClient.post<Todo, CreateTodoRequest>('/todos/add', todo);
   }
 
-  updateTodo(id: number, todo: Partial<Todo>): Observable<Todo> {
-    return this.httpClient.put<Todo>(`/todos/${id}`, todo);
+  updateTodo(id: number, todo: UpdateTodoRequest): Observable<Todo> {
+    return this.httpClient.patch<Todo, UpdateTodoRequest>(`/todos/${id}`, todo);
   }
 
-  deleteTodo(id: number): Observable<any> {
-    return this.httpClient.delete(`/todos/${id}`);
+  deleteTodo(id: number): Observable<DeletedTodo> {
+    return this.httpClient.delete<DeletedTodo>(`/todos/${id}`);
   }
 }

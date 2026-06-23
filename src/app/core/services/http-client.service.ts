@@ -2,16 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { getEnvironmentConfig } from './environment.service';
+import { PaginationQuery } from '@shared/models';
 
-export interface PaginationOptions {
-  limit?: number;
-  skip?: number;
-  select?: string;
-  sortBy?: string;      // Field to sort by
-  order?: 'asc' | 'desc'; // Sort order
-  delay?: number;       // Delay response in ms (0-5000)
-  filter?: string;      // Filter string (API-specific)
-}
+type QueryParamValue = string | number | boolean | readonly string[] | null | undefined;
+type QueryRecord = Record<string, QueryParamValue>;
+export type QueryParams = PaginationQuery | QueryRecord;
 
 @Injectable({
   providedIn: 'root',
@@ -22,46 +17,44 @@ export class HttpClientService {
 
   constructor(private http: HttpClient) {}
 
-  get<T>(endpoint: string, options?: PaginationOptions): Observable<T> {
+  get<TResponse>(endpoint: string, query?: QueryParams): Observable<TResponse> {
+    return this.http.get<TResponse>(this.buildUrl(endpoint), {
+      params: this.buildParams(query),
+    });
+  }
+
+  post<TResponse, TBody extends object>(endpoint: string, body: TBody): Observable<TResponse> {
+    return this.http.post<TResponse>(this.buildUrl(endpoint), body);
+  }
+
+  put<TResponse, TBody extends object>(endpoint: string, body: TBody): Observable<TResponse> {
+    return this.http.put<TResponse>(this.buildUrl(endpoint), body);
+  }
+
+  patch<TResponse, TBody extends object>(endpoint: string, body: TBody): Observable<TResponse> {
+    return this.http.patch<TResponse>(this.buildUrl(endpoint), body);
+  }
+
+  delete<TResponse>(endpoint: string): Observable<TResponse> {
+    return this.http.delete<TResponse>(this.buildUrl(endpoint));
+  }
+
+  private buildUrl(endpoint: string): string {
+    return endpoint.startsWith('/') ? `${this.baseUrl}${endpoint}` : `${this.baseUrl}/${endpoint}`;
+  }
+
+  private buildParams(query?: QueryParams): HttpParams {
     let params = new HttpParams();
-    if (options?.limit) {
-      params = params.set('limit', options.limit.toString());
-    }
-    if (options?.skip) {
-      params = params.set('skip', options.skip.toString());
-    }
-    if (options?.select) {
-      params = params.set('select', options.select);
-    }
-    if (options?.sortBy) {
-      params = params.set('sortBy', options.sortBy);
-    }
-    if (options?.order) {
-      params = params.set('order', options.order);
-    }
-    if (options?.delay) {
-      params = params.set('delay', options.delay.toString());
-    }
-    if (options?.filter) {
-      params = params.set('filter', options.filter);
-    }
 
-    return this.http.get<T>(`${this.baseUrl}${endpoint}`, { params });
-  }
+    Object.entries(query ?? {}).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') {
+        return;
+      }
 
-  post<T>(endpoint: string, body: any): Observable<T> {
-    return this.http.post<T>(`${this.baseUrl}${endpoint}`, body);
-  }
+      const normalizedValue = Array.isArray(value) ? value.join(',') : String(value);
+      params = params.set(key, normalizedValue);
+    });
 
-  put<T>(endpoint: string, body: any): Observable<T> {
-    return this.http.put<T>(`${this.baseUrl}${endpoint}`, body);
-  }
-
-  patch<T>(endpoint: string, body: any): Observable<T> {
-    return this.http.patch<T>(`${this.baseUrl}${endpoint}`, body);
-  }
-
-  delete<T>(endpoint: string): Observable<T> {
-    return this.http.delete<T>(`${this.baseUrl}${endpoint}`);
+    return params;
   }
 }

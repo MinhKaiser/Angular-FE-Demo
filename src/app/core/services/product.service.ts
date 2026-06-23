@@ -1,47 +1,58 @@
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { Product, ProductsResponse, Category } from '@shared/models';
-import { HttpClientService, PaginationOptions } from './http-client.service';
+import { Observable } from 'rxjs';
+import {
+  Category,
+  CreateProductRequest,
+  DeletedProduct,
+  PaginationQuery,
+  Product,
+  ProductsResponse,
+  UpdateProductRequest,
+} from '@shared/models';
+import { HttpClientService } from './http-client.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProductService {
-  private productsSubject = new BehaviorSubject<Product[]>([]);
-  products$ = this.productsSubject.asObservable();
-
   constructor(private httpClient: HttpClientService) {}
 
-  getAllProducts(options?: PaginationOptions): Observable<ProductsResponse> {
-    return this.httpClient.get<ProductsResponse>('/products', options);
+  getProducts(query?: PaginationQuery): Observable<ProductsResponse> {
+    return this.httpClient.get<ProductsResponse>('/products', query);
   }
 
-  getProductById(id: number, options?: PaginationOptions): Observable<Product> {
-    return this.httpClient.get<Product>(`/products/${id}`, options);
+  getProduct(id: number): Observable<Product> {
+    return this.httpClient.get<Product>(`/products/${id}`);
   }
 
-  searchProducts(query: string, options?: PaginationOptions): Observable<ProductsResponse> {
-    const searchOptions = { ...options, select: query };
-    return this.httpClient.get<ProductsResponse>(`/products/search?q=${query}`, options);
+  searchProducts(searchTerm: string, query?: PaginationQuery): Observable<ProductsResponse> {
+    return this.httpClient.get<ProductsResponse>('/products/search', {
+      ...query,
+      q: searchTerm.trim(),
+    });
   }
 
   getCategories(): Observable<Category[]> {
     return this.httpClient.get<Category[]>('/products/categories');
   }
 
-  getProductsByCategory(categoryName: string, options?: PaginationOptions): Observable<ProductsResponse> {
-    return this.httpClient.get<ProductsResponse>(`/products/category/${categoryName}`, options);
+  getCategoryList(): Observable<string[]> {
+    return this.httpClient.get<string[]>('/products/category-list');
   }
 
-  addProduct(product: Omit<Product, 'id'>): Observable<Product> {
-    return this.httpClient.post<Product>('/products/add', product);
+  getProductsByCategory(categorySlug: string, query?: PaginationQuery): Observable<ProductsResponse> {
+    return this.httpClient.get<ProductsResponse>(`/products/category/${categorySlug}`, query);
   }
 
-  updateProduct(id: number, product: Partial<Product>): Observable<Product> {
-    return this.httpClient.put<Product>(`/products/${id}`, product);
+  addProduct(product: CreateProductRequest): Observable<Product> {
+    return this.httpClient.post<Product, CreateProductRequest>('/products/add', product);
   }
 
-  deleteProduct(id: number): Observable<any> {
-    return this.httpClient.delete(`/products/${id}`);
+  updateProduct(id: number, product: UpdateProductRequest): Observable<Product> {
+    return this.httpClient.patch<Product, UpdateProductRequest>(`/products/${id}`, product);
+  }
+
+  deleteProduct(id: number): Observable<DeletedProduct> {
+    return this.httpClient.delete<DeletedProduct>(`/products/${id}`);
   }
 }

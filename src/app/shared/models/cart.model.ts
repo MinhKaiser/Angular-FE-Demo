@@ -1,4 +1,4 @@
-import { Product } from './product.model';
+import { DeletedResource, PaginatedResponse } from './api.model';
 
 export interface CartItem {
   id: number;
@@ -7,7 +7,8 @@ export interface CartItem {
   quantity: number;
   total: number;
   discountPercentage: number;
-  discountedTotal: number;
+  discountedTotal?: number;
+  discountedPrice?: number;
   thumbnail?: string;
 }
 
@@ -21,9 +22,23 @@ export interface Cart {
   totalQuantity: number;
 }
 
-export interface CartsResponse {
+export interface CartsResponse extends PaginatedResponse {
   carts: Cart[];
-  total: number;
-  skip: number;
-  limit: number;
 }
+
+export interface CartProductInput {
+  id: number;
+  quantity: number;
+}
+
+export interface CreateCartRequest {
+  userId: number;
+  products: CartProductInput[];
+}
+
+export interface UpdateCartRequest {
+  merge?: boolean;
+  products: CartProductInput[];
+}
+
+export type DeletedCart = Cart & DeletedResource;

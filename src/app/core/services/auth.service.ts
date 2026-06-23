@@ -1,112 +1,81 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of } from 'rxjs';
-import { User, LoginRequest, LoginResponse, AuthState } from '@shared/models';
+import { catchError, Observable, tap, throwError } from 'rxjs';
+import {
+  AuthState,
+  LoginRequest,
+  LoginResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  User,
+  UserSummary,
+} from '@shared/models';
 import { getEnvironmentConfig } from './environment.service';
 
-/**
- * Dịch vụ xác thực
- * Quản lý đăng nhập, token và phiên làm việc
- * Sử dụng API DummyJSON: https://dummyjson.com/docs/auth
- */
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private readonly config = getEnvironmentConfig();
   private readonly baseUrl = this.config.apiUrl;
+  private readonly storageKeys = {
+    accessToken: 'dummyjson_access_token',
+    refreshToken: 'dummyjson_refresh_token',
+    user: 'dummyjson_user',
+  };
 
-  private readonly authState = signal<AuthState>({
-    user: this.loadUserFromStorage(),
-    accessToken: this.loadTokenFromStorage(),
-    refreshToken: this.loadRefreshTokenFromStorage(),
-    isAuthenticated: !!this.loadTokenFromStorage(),
-    isLoading: false,
-    error: null,
-  });
+  private readonly authState = signal<AuthState>(this.createInitialState());
 
-  // Các computed signal cho trạng thái phản ứng
   readonly user = computed(() => this.authState().user);
   readonly isAuthenticated = computed(() => this.authState().isAuthenticated);
   readonly isLoading = computed(() => this.authState().isLoading);
   readonly error = computed(() => this.authState().error);
+  readonly displayName = computed(() => {
+    const user = this.user();
+    return user ? `${user.firstName} ${user.lastName}` : '';
+  });
 
   constructor(private http: HttpClient) {
-    this.checkTokenValidity();
+    if (this.isTokenExpired()) {
+      this.clearSession();
+    }
   }
 
-  // Đăng nhập với thông tin đăng nhập (POST /auth/login)
   login(credentials: LoginRequest): Observable<LoginResponse> {
     this.authState.update(state => ({ ...state, isLoading: true, error: null }));
 
-    return this.http.post<LoginResponse>(
-      `${this.baseUrl}/auth/login`,
-      credentials,
-      { withCredentials: true } // Include cookies for credential handling
-    ).pipe(
+    return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, credentials, {
+      withCredentials: true,
+    }).pipe(
       tap(response => {
-        const { accessToken, refreshToken, ...user } = response;
-        this.saveTokensToStorage(accessToken, refreshToken);
-        this.saveUserToStorage(user as User);
-        this.authState.update(state => ({
-          ...state,
-          user: user as User,
-          accessToken,
-          refreshToken,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        }));
+        this.setSession(response, response.accessToken, response.refreshToken);
       }),
       catchError(error => {
-        const errorMsg = error.error?.message || error.statusText || 'Login failed';
         this.authState.update(state => ({
           ...state,
           isLoading: false,
-          error: errorMsg,
+          error: this.getErrorMessage(error, 'Login failed'),
         }));
-        throw error;
+
+        return throwError(() => error);
       })
     );
   }
 
-  /**
-   * Logout user
-   * POST /auth/logout
-   */
-  logout(): Observable<void> {
-    return this.http.post<void>(
-      `${this.baseUrl}/auth/logout`,
-      {},
-      { withCredentials: true }
-    ).pipe(
-      tap(() => this.clearAuthState()),
-      catchError(error => {
-        this.clearAuthState();
-        return of(void 0);
-      })
-    );
+  logout(): void {
+    this.clearSession();
   }
 
-  /**
-   * Get current authenticated user info
-   * GET /auth/me
-   */
   getCurrentUser(): Observable<User> {
-    const token = this.loadTokenFromStorage();
+    const token = this.getAccessToken();
+
     if (!token) {
-      throw new Error('No access token available');
+      return throwError(() => new Error('No access token available'));
     }
 
-    return this.http.get<User>(
-      `${this.baseUrl}/auth/me`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        withCredentials: true,
-      }
-    ).pipe(
+    return this.http.get<User>(`${this.baseUrl}/auth/me`, {
+      withCredentials: true,
+    }).pipe(
       tap(user => {
         this.saveUserToStorage(user);
         this.authState.update(state => ({
@@ -115,131 +84,65 @@ export class AuthService {
         }));
       }),
       catchError(error => {
-        this.clearAuthState();
-        throw error;
+        this.clearSession();
+        return throwError(() => error);
       })
     );
   }
 
-  /**
-   * Refresh authentication tokens
-   * POST /auth/refresh
-   * Extends session and creates new access token
-   */
-  refreshToken(expiresInMins?: number): Observable<{ accessToken: string; refreshToken: string }> {
-    const refreshTokenValue = this.loadRefreshTokenFromStorage();
+  refreshToken(expiresInMins?: number): Observable<RefreshTokenResponse> {
+    const refreshTokenValue = this.getRefreshToken();
+    const body: RefreshTokenRequest = {};
 
-    const body: any = {};
     if (refreshTokenValue) {
       body.refreshToken = refreshTokenValue;
     }
+
     if (expiresInMins) {
       body.expiresInMins = expiresInMins;
     }
 
-    return this.http.post<{ accessToken: string; refreshToken: string }>(
-      `${this.baseUrl}/auth/refresh`,
-      body,
-      { withCredentials: true }
-    ).pipe(
+    return this.http.post<RefreshTokenResponse>(`${this.baseUrl}/auth/refresh`, body, {
+      withCredentials: true,
+    }).pipe(
       tap(response => {
         this.saveTokensToStorage(response.accessToken, response.refreshToken);
         this.authState.update(state => ({
           ...state,
           accessToken: response.accessToken,
           refreshToken: response.refreshToken,
+          isAuthenticated: true,
         }));
       }),
       catchError(error => {
-        this.clearAuthState();
-        throw error;
+        this.clearSession();
+        return throwError(() => error);
       })
     );
   }
 
-  /**
-   * Get access token
-   */
   getAccessToken(): string | null {
-    return this.loadTokenFromStorage();
+    return this.authState().accessToken;
   }
 
-  /**
-   * Get refresh token
-   */
   getRefreshToken(): string | null {
-    return this.loadRefreshTokenFromStorage();
+    return this.authState().refreshToken;
   }
 
-  /**
-   * Check if current access token is expired
-   */
   isTokenExpired(): boolean {
-    const token = this.loadTokenFromStorage();
+    const token = this.getAccessToken();
     if (!token) return true;
 
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const expiryTime = payload.exp * 1000;
-      return Date.now() >= expiryTime;
+      const payload = JSON.parse(atob(this.normalizeBase64Url(token.split('.')[1])));
+      return Date.now() >= payload.exp * 1000;
     } catch {
       return true;
     }
   }
 
-  /**
-   * Private helpers
-   */
-  private checkTokenValidity(): void {
-    const token = this.loadTokenFromStorage();
-    if (token && this.isTokenExpired()) {
-      this.clearAuthState();
-    }
-  }
-
-  private saveTokensToStorage(accessToken: string, refreshToken: string): void {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-  }
-
-  private saveUserToStorage(user: User): void {
-    localStorage.setItem('user', JSON.stringify(user));
-  }
-
-  private loadTokenFromStorage(): string | null {
-    try {
-      return localStorage.getItem('accessToken');
-    } catch {
-      return null;
-    }
-  }
-
-  private loadRefreshTokenFromStorage(): string | null {
-    try {
-      return localStorage.getItem('refreshToken');
-    } catch {
-      return null;
-    }
-  }
-
-  private loadUserFromStorage(): User | null {
-    try {
-      const user = localStorage.getItem('user');
-      return user ? JSON.parse(user) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private clearAuthState(): void {
-    try {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-    } catch {
-      // Ignore errors if localStorage is unavailable
-    }
-
+  clearSession(): void {
+    this.removeStoredAuth();
     this.authState.set({
       user: null,
       accessToken: null,
@@ -248,5 +151,89 @@ export class AuthService {
       isLoading: false,
       error: null,
     });
+  }
+
+  private createInitialState(): AuthState {
+    const accessToken = this.loadTokenFromStorage();
+    const refreshToken = this.loadRefreshTokenFromStorage();
+
+    return {
+      user: this.loadUserFromStorage(),
+      accessToken,
+      refreshToken,
+      isAuthenticated: !!accessToken,
+      isLoading: false,
+      error: null,
+    };
+  }
+
+  private setSession(user: UserSummary, accessToken: string, refreshToken: string): void {
+    this.saveTokensToStorage(accessToken, refreshToken);
+    this.saveUserToStorage(user);
+    this.authState.set({
+      user,
+      accessToken,
+      refreshToken,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+    });
+  }
+
+  private saveTokensToStorage(accessToken: string, refreshToken: string): void {
+    localStorage.setItem(this.storageKeys.accessToken, accessToken);
+    localStorage.setItem(this.storageKeys.refreshToken, refreshToken);
+  }
+
+  private saveUserToStorage(user: UserSummary): void {
+    localStorage.setItem(this.storageKeys.user, JSON.stringify(user));
+  }
+
+  private loadTokenFromStorage(): string | null {
+    try {
+      return localStorage.getItem(this.storageKeys.accessToken);
+    } catch {
+      return null;
+    }
+  }
+
+  private loadRefreshTokenFromStorage(): string | null {
+    try {
+      return localStorage.getItem(this.storageKeys.refreshToken);
+    } catch {
+      return null;
+    }
+  }
+
+  private loadUserFromStorage(): UserSummary | null {
+    try {
+      const user = localStorage.getItem(this.storageKeys.user);
+      return user ? JSON.parse(user) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private removeStoredAuth(): void {
+    try {
+      localStorage.removeItem(this.storageKeys.accessToken);
+      localStorage.removeItem(this.storageKeys.refreshToken);
+      localStorage.removeItem(this.storageKeys.user);
+    } catch {
+      return;
+    }
+  }
+
+  private normalizeBase64Url(value: string): string {
+    const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+    return base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+  }
+
+  private getErrorMessage(error: unknown, fallback: string): string {
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+      return String(error.message);
+    }
+
+    return fallback;
   }
 }

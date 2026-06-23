@@ -7,7 +7,6 @@
     "outDir": "./out-tsc/app",
     "types": [],
     "baseUrl": "./",
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@core": ["src/app/core"],
       "@core/*": ["src/app/core/*"],

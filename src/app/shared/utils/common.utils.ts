@@ -18,9 +18,12 @@ export const truncateText = (text: string, maxLength: number): string => {
   return text.substring(0, maxLength) + '...';
 };
 
-export const debounce = (func: Function, wait: number) => {
-  let timeout: any;
-  return function (...args: any[]) {
+export const debounce = <TArgs extends unknown[]>(
+  func: (...args: TArgs) => void,
+  wait: number
+): ((...args: TArgs) => void) => {
+  let timeout: ReturnType<typeof setTimeout>;
+  return (...args: TArgs) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };

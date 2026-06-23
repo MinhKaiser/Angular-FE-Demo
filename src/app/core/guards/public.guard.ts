@@ -1,9 +1,8 @@
-import { Injectable } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 
-export const publicGuard: CanActivateFn = (route, state) => {
+export const publicGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
@@ -11,6 +10,5 @@ export const publicGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
-  router.navigate(['/dashboard']);
-  return false;
+  return router.createUrlTree(['/dashboard']);
 };

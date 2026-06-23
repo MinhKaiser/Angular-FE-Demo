@@ -1,70 +1,65 @@
-import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { ProductService } from '@core/services';
+import { Component, OnInit, inject } from '@angular/core';
 import { Product } from '@shared/models';
-import { CurrencyFormatPipe } from '@shared/pipes';
+import { ProductCardComponent } from './components/product-card.component';
+import { ProductFilterComponent } from './components/product-filter.component';
+import { ProductsStore } from './state/products.store';
 
 @Component({
   selector: 'app-products-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, CurrencyFormatPipe],
+  imports: [CommonModule, ProductCardComponent, ProductFilterComponent],
+  providers: [ProductsStore],
   template: `
-    <div class="min-h-screen bg-gray-50">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">Products</h1>
-        
-        <div *ngIf="isLoading" class="flex justify-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-
-        <div *ngIf="!isLoading && products.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div *ngFor="let product of products" class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-            <div class="aspect-square bg-gray-200 overflow-hidden">
-              <img [src]="product.thumbnail" [alt]="product.title" class="w-full h-full object-cover hover:scale-105 transition" />
-            </div>
-            <div class="p-4">
-              <p class="text-xs font-medium text-blue-600 mb-1">{{ product.category | uppercase }}</p>
-              <h3 class="font-semibold text-gray-900 mb-2 truncate">{{ product.title }}</h3>
-              <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ product.description }}</p>
-              <div class="flex justify-between items-center">
-                <span class="text-lg font-bold text-gray-900">{{ product.price | appCurrency }}</span>
-                <span class="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded">⭐ {{ product.rating }}</span>
-              </div>
-              <button [routerLink]="['/products', product.id]" class="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-                View Details
-              </button>
-            </div>
+    <section class="min-h-screen bg-slate-50">
+      <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p class="text-sm font-medium uppercase tracking-wide text-blue-700">DummyJSON products</p>
+            <h1 class="mt-1 text-3xl font-bold text-slate-950">Products</h1>
+            <p class="mt-2 text-sm text-slate-600">{{ store.total() }} items from the API</p>
           </div>
+
+          <app-product-filter
+            [categories]="store.categories()"
+            [selectedCategory]="store.filters().category"
+            [isLoading]="store.isLoading()"
+            (search)="store.search($event)"
+            (categoryChange)="store.filterByCategory($event)"
+          />
         </div>
 
-        <div *ngIf="!isLoading && products.length === 0" class="text-center py-12">
-          <p class="text-gray-600">No products found</p>
+        <div *ngIf="store.errorMessage()" class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ store.errorMessage() }}
+        </div>
+
+        <div *ngIf="store.isLoading()" class="flex min-h-64 items-center justify-center">
+          <div class="h-12 w-12 animate-spin rounded-full border-4 border-blue-200 border-t-blue-700"></div>
+        </div>
+
+        <div *ngIf="!store.isLoading() && store.products().length > 0" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <app-product-card
+            *ngFor="let product of store.products(); trackBy: trackByProductId"
+            [product]="product"
+          />
+        </div>
+
+        <div *ngIf="!store.isLoading() && store.products().length === 0" class="rounded-lg border border-dashed border-slate-300 bg-white py-16 text-center">
+          <p class="font-medium text-slate-900">No products found</p>
+          <p class="mt-1 text-sm text-slate-500">Try another keyword or category.</p>
         </div>
       </div>
-    </div>
+    </section>
   `,
 })
 export class ProductsListComponent implements OnInit {
-  private productService = inject(ProductService);
-  
-  products: Product[] = [];
-  isLoading = true;
+  protected readonly store = inject(ProductsStore);
 
   ngOnInit(): void {
-    this.loadProducts();
+    this.store.loadInitialData();
   }
 
-  private loadProducts(): void {
-    this.productService.getAllProducts({ limit: 12, skip: 0 }).subscribe({
-      next: (response) => {
-        this.products = response.products;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load products:', err);
-        this.isLoading = false;
-      },
-    });
+  trackByProductId(_index: number, product: Product): number {
+    return product.id;
   }
 }

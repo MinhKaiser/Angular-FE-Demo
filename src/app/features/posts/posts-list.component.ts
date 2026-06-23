@@ -1,65 +1,65 @@
-import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { PostService } from '@core/services';
+import { Component, OnInit, inject } from '@angular/core';
 import { Post } from '@shared/models';
+import { PostCardComponent } from './components/post-card.component';
+import { PostFilterComponent } from './components/post-filter.component';
+import { PostsStore } from './state/posts.store';
 
 @Component({
   selector: 'app-posts-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, PostCardComponent, PostFilterComponent],
+  providers: [PostsStore],
   template: `
-    <div class="min-h-screen bg-gray-50">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">Posts</h1>
-        
-        <div *ngIf="isLoading" class="flex justify-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <section class="min-h-screen bg-slate-50">
+      <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+        <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p class="text-sm font-medium uppercase tracking-wide text-emerald-700">DummyJSON posts</p>
+            <h1 class="mt-1 text-3xl font-bold text-slate-950">Posts</h1>
+            <p class="mt-2 text-sm text-slate-600">{{ store.total() }} posts available</p>
+          </div>
+
+          <app-post-filter
+            [tags]="store.tags()"
+            [selectedTag]="store.filters().tag"
+            [isLoading]="store.isLoading()"
+            (search)="store.search($event)"
+            (tagChange)="store.filterByTag($event)"
+          />
         </div>
 
-        <div *ngIf="!isLoading && posts.length > 0" class="space-y-4">
-          <article *ngFor="let post of posts" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-            <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ post.title }}</h2>
-            <p class="text-gray-600 mb-4">{{ post.body }}</p>
-            <div class="flex items-center justify-between">
-              <div class="flex gap-4 text-sm text-gray-500">
-                <span>👁️ {{ post.views }} views</span>
-                <span>👍 {{ post.reactions.likes }} likes</span>
-              </div>
-              <button [routerLink]="['/posts', post.id]" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                Read More
-              </button>
-            </div>
-          </article>
+        <div *ngIf="store.errorMessage()" class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ store.errorMessage() }}
         </div>
 
-        <div *ngIf="!isLoading && posts.length === 0" class="text-center py-12">
-          <p class="text-gray-600">No posts found</p>
+        <div *ngIf="store.isLoading()" class="flex min-h-64 items-center justify-center">
+          <div class="h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700"></div>
+        </div>
+
+        <div *ngIf="!store.isLoading() && store.posts().length > 0" class="space-y-4">
+          <app-post-card
+            *ngFor="let post of store.posts(); trackBy: trackByPostId"
+            [post]="post"
+          />
+        </div>
+
+        <div *ngIf="!store.isLoading() && store.posts().length === 0" class="rounded-lg border border-dashed border-slate-300 bg-white py-16 text-center">
+          <p class="font-medium text-slate-900">No posts found</p>
+          <p class="mt-1 text-sm text-slate-500">Try another keyword or tag.</p>
         </div>
       </div>
-    </div>
+    </section>
   `,
 })
 export class PostsListComponent implements OnInit {
-  private postService = inject(PostService);
-  
-  posts: Post[] = [];
-  isLoading = true;
+  protected readonly store = inject(PostsStore);
 
   ngOnInit(): void {
-    this.loadPosts();
+    this.store.loadInitialData();
   }
 
-  private loadPosts(): void {
-    this.postService.getAllPosts({ limit: 20, skip: 0 }).subscribe({
-      next: (response) => {
-        this.posts = response.posts;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Failed to load posts:', err);
-        this.isLoading = false;
-      },
-    });
+  trackByPostId(_index: number, post: Post): number {
+    return post.id;
   }
 }

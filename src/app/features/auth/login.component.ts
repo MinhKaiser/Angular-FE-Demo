@@ -1,119 +1,123 @@
-import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { AuthService } from '@core/services';
+import { Component, OnInit, inject } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService, getEnvironmentConfig } from '@core/services';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center p-4">
-      <div class="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
-        <!-- Logo -->
-        <div class="text-center mb-8">
-          <div class="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg mx-auto mb-4"></div>
-          <h1 class="text-2xl font-bold text-gray-900">Welcome Back</h1>
-          <p class="text-gray-600 mt-2">Sign in to your account</p>
+    <section class="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+      <div class="w-full max-w-md rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+        <div class="mb-8">
+          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-slate-950 text-sm font-bold text-white">DJ</div>
+          <h1 class="text-2xl font-bold text-slate-950">Sign in</h1>
+          <p class="mt-2 text-sm text-slate-600">Use a DummyJSON account to continue.</p>
         </div>
 
-        <!-- Error Message -->
-        <div *ngIf="error()" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p class="text-sm text-red-600">{{ error() }}</p>
+        <div *ngIf="error()" class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {{ error() }}
         </div>
 
-        <!-- Login Form -->
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
-          <!-- Username -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+            <label for="username" class="mb-2 block text-sm font-medium text-slate-700">Username</label>
             <input
+              id="username"
               type="text"
               formControlName="username"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition"
-              placeholder="Enter your username"
+              class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+              autocomplete="username"
             />
-            <p *ngIf="isFieldInvalid('username')" class="text-xs text-red-600 mt-1">Username is required</p>
+            <p *ngIf="isFieldInvalid('username')" class="mt-1 text-xs text-red-600">Username is required.</p>
           </div>
 
-          <!-- Password -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <label for="password" class="mb-2 block text-sm font-medium text-slate-700">Password</label>
             <input
+              id="password"
               type="password"
               formControlName="password"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition"
-              placeholder="Enter your password"
+              class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+              autocomplete="current-password"
             />
-            <p *ngIf="isFieldInvalid('password')" class="text-xs text-red-600 mt-1">Password is required</p>
+            <p *ngIf="isFieldInvalid('password')" class="mt-1 text-xs text-red-600">Password is required.</p>
           </div>
 
-          <!-- Submit Button -->
           <button
             type="submit"
             [disabled]="isLoading() || loginForm.invalid"
-            class="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition font-medium"
+            class="w-full rounded-md bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:bg-slate-400"
           >
-            <span *ngIf="!isLoading()">Sign In</span>
-            <span *ngIf="isLoading()">Signing in...</span>
+            {{ isLoading() ? 'Signing in...' : 'Sign in' }}
           </button>
         </form>
 
-        <!-- Demo Credentials -->
-        <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p class="text-sm font-medium text-gray-900 mb-2">Demo Credentials:</p>
-          <p class="text-xs text-gray-600"><strong>Username:</strong> emilys</p>
-          <p class="text-xs text-gray-600"><strong>Password:</strong> emilyspass</p>
-        </div>
+        <button
+          *ngIf="demoCredentials"
+          type="button"
+          (click)="useDemoCredentials()"
+          class="mt-4 w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+        >
+          Use demo credentials
+        </button>
 
-        <!-- Footer -->
-        <p class="text-center text-sm text-gray-600 mt-6">
-          Don't have an account?
-          <a routerLink="/auth/register" class="text-blue-600 hover:text-blue-700 font-medium">Sign up</a>
-        </p>
+        <div *ngIf="demoCredentials" class="mt-6 rounded-md bg-slate-50 p-4 text-sm text-slate-600">
+          <p><span class="font-semibold text-slate-900">Username:</span> {{ demoCredentials.username }}</p>
+          <p class="mt-1"><span class="font-semibold text-slate-900">Password:</span> {{ demoCredentials.password }}</p>
+        </div>
       </div>
-    </div>
+    </section>
   `,
 })
 export class LoginComponent implements OnInit {
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly config = getEnvironmentConfig();
 
-  loginForm!: FormGroup;
-  isLoading = this.authService.isLoading;
-  error = this.authService.error;
-  returnUrl = '';
+  readonly isLoading = this.authService.isLoading;
+  readonly error = this.authService.error;
+  readonly demoCredentials = this.config.demoCredentials;
+  readonly loginForm = this.fb.group({
+    username: ['', Validators.required],
+    password: ['', Validators.required],
+  });
+
+  private returnUrl = '/dashboard';
 
   ngOnInit(): void {
-    this.initForm();
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-  }
-
-  private initForm(): void {
-    this.loginForm = this.fb.group({
-      username: ['', Validators.required],
-      password: ['', Validators.required],
-    });
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
   }
 
   onSubmit(): void {
-    if (this.loginForm.valid) {
-      this.authService.login(this.loginForm.value).subscribe({
-        next: () => {
-          this.router.navigateByUrl(this.returnUrl);
-        },
-        error: (err) => {
-          console.error('Login failed:', err);
-        },
-      });
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
     }
+
+    this.authService.login({
+      ...this.loginForm.getRawValue(),
+      expiresInMins: 30,
+    }).subscribe({
+      next: () => this.router.navigateByUrl(this.returnUrl),
+    });
   }
 
-  isFieldInvalid(fieldName: string): boolean {
-    const field = this.loginForm.get(fieldName);
-    return !!(field && field.invalid && (field.dirty || field.touched));
+  useDemoCredentials(): void {
+    if (!this.demoCredentials) return;
+
+    this.loginForm.setValue({
+      username: this.demoCredentials.username,
+      password: this.demoCredentials.password,
+    });
+  }
+
+  isFieldInvalid(fieldName: 'username' | 'password'): boolean {
+    const field = this.loginForm.controls[fieldName];
+    return field.invalid && (field.dirty || field.touched);
   }
 }

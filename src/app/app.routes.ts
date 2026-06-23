@@ -1,10 +1,5 @@
 import { Routes } from '@angular/router';
 import { authGuard, publicGuard } from '@core/guards';
-import { LoginComponent } from '@features/auth';
-import { ProductsListComponent } from '@features/products';
-import { PostsListComponent } from '@features/posts';
-import { TodosListComponent } from '@features/todos';
-import { DashboardComponent } from '@features/dashboard';
 
 export const routes: Routes = [
   {
@@ -17,27 +12,35 @@ export const routes: Routes = [
     children: [
       {
         path: 'login',
-        component: LoginComponent,
+        loadComponent: () => import('@features/auth').then(m => m.LoginComponent),
         canActivate: [publicGuard],
       },
     ],
   },
   {
     path: 'dashboard',
-    component: DashboardComponent,
+    loadComponent: () => import('@features/dashboard').then(m => m.DashboardComponent),
     canActivate: [authGuard],
   },
   {
     path: 'products',
-    component: ProductsListComponent,
+    loadComponent: () => import('@features/products').then(m => m.ProductsListComponent),
+  },
+  {
+    path: 'products/:id',
+    loadComponent: () => import('@features/products').then(m => m.ProductDetailComponent),
   },
   {
     path: 'posts',
-    component: PostsListComponent,
+    loadComponent: () => import('@features/posts').then(m => m.PostsListComponent),
+  },
+  {
+    path: 'posts/:id',
+    loadComponent: () => import('@features/posts').then(m => m.PostDetailComponent),
   },
   {
     path: 'todos',
-    component: TodosListComponent,
+    loadComponent: () => import('@features/todos').then(m => m.TodosListComponent),
     canActivate: [authGuard],
   },
   {

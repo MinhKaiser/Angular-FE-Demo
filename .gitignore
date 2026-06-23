@@ -5,11 +5,14 @@
 /tmp
 /out-tsc
 /bazel-out
+*.tsbuildinfo
 
 # Node
 /node_modules
 npm-debug.log
 yarn-error.log
+pnpm-debug.log*
+yarn-debug.log*
 
 # IDEs and editors
 .idea/
@@ -30,7 +33,7 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
+/.angular
 .sass-cache/
 /connect.lock
 /coverage
@@ -38,6 +41,14 @@ yarn-error.log
 testem.log
 /typings
 __screenshots__/
+playwright-report/
+test-results/
+
+# Local training/reference documents
+/TaiLieuBE.txt
+/docs-local/
+*.local.md
+*.notes.md
 
 # System files
 .DS_Store
@@ -45,7 +56,11 @@ Thumbs.db
 
 # Environment files (NEVER commit sensitive data)
 .env
+.env.development
+.env.test
+.env.staging
 .env.local
+.env.*
 .env.*.local
 .env.production
 !.env.example

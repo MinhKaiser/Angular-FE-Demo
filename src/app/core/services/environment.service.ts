@@ -1,35 +1,30 @@
-/**
- * Environment configuration service
- * Loads environment variables from .env file (development)
- * or process.env (production/CI)
- */
+import { environment } from '../../../environments/environment';
 
-export const getEnvironmentConfig = () => {
-  const isDevelopment = !isProd();
+export interface EnvironmentConfig {
+  production: boolean;
+  apiUrl: string;
+  apiTimeout: number;
+  environmentName: 'development' | 'production';
+  debug: boolean;
+  demoCredentials: DemoCredentials | null;
+}
 
+export interface DemoCredentials {
+  username: string;
+  password: string;
+}
+
+export const getEnvironmentConfig = (): EnvironmentConfig => {
   return {
-    production: isProd(),
-    apiUrl: getEnvVariable('NG_APP_API_URL', 'https://dummyjson.com'),
-    apiTimeout: parseInt(getEnvVariable('NG_APP_API_TIMEOUT', '30000'), 10),
-    environment: getEnvVariable('NG_APP_ENVIRONMENT', isDevelopment ? 'development' : 'production'),
-    debug: getEnvVariable('NG_APP_DEBUG', isDevelopment ? 'true' : 'false') === 'true',
-    enableAnalytics: getEnvVariable('NG_APP_ENABLE_ANALYTICS', 'false') === 'true',
-    enableSentry: getEnvVariable('NG_APP_ENABLE_SENTRY', 'false') === 'true',
+    production: environment.production,
+    apiUrl: normalizeBaseUrl(environment.apiUrl),
+    apiTimeout: 30000,
+    environmentName: environment.production ? 'production' : 'development',
+    debug: !environment.production,
+    demoCredentials: environment.demoCredentials,
   };
 };
 
-/**
- * Get environment variable with fallback
- */
-function getEnvVariable(key: string, defaultValue: string = ''): string {
-  // In Angular, env vars are prefixed with NG_APP_ and available globally
-  // For client-side apps, they're embedded during build
-  return (window as any).__ENV__?.[key] || defaultValue;
-}
-
-/**
- * Check if production environment
- */
-function isProd(): boolean {
-  return window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, '');
 }
