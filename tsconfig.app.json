@@ -5,7 +5,16 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./out-tsc/app",
-    "types": []
+    "types": [],
+    "baseUrl": "./src",
+    "paths": {
+      "@core": ["app/core"],
+      "@core/*": ["app/core/*"],
+      "@shared": ["app/shared"],
+      "@shared/*": ["app/shared/*"],
+      "@features": ["app/features"],
+      "@features/*": ["app/features/*"]
+    }
   },
   "include": [
     "src/**/*.ts"
@@ -14,3 +23,4 @@
     "src/**/*.spec.ts"
   ]
 }
+
