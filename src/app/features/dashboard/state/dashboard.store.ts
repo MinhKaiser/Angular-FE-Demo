@@ -1,4 +1,5 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { AuthService, PostService, ProductService, TodoService } from '@core/services';
 
@@ -24,53 +25,48 @@ const initialState: DashboardState = {
   errorMessage: '',
 };
 
-@Injectable()
-export class DashboardStore {
-  private readonly authService = inject(AuthService);
-  private readonly productService = inject(ProductService);
-  private readonly postService = inject(PostService);
-  private readonly todoService = inject(TodoService);
-  private readonly state = signal<DashboardState>(initialState);
+export const DashboardStore = signalStore(
+  withState(initialState),
+  withComputed((_store, authService = inject(AuthService)) => ({
+    displayName: authService.displayName,
+    userId: computed(() => authService.user()?.id ?? 0),
+  })),
+  withMethods((
+    store,
+    authService = inject(AuthService),
+    productService = inject(ProductService),
+    postService = inject(PostService),
+    todoService = inject(TodoService)
+  ) => ({
+    loadStatistics(): void {
+      const user = authService.user();
+      if (!user) return;
 
-  readonly displayName = this.authService.displayName;
-  readonly userId = computed(() => this.authService.user()?.id ?? 0);
-  readonly stats = computed(() => this.state().stats);
-  readonly isLoading = computed(() => this.state().isLoading);
-  readonly errorMessage = computed(() => this.state().errorMessage);
+      patchState(store, { isLoading: true, errorMessage: '' });
 
-  loadStatistics(): void {
-    const user = this.authService.user();
-    if (!user) return;
+      forkJoin({
+        products: productService.getProducts({ limit: 1, skip: 0 }),
+        posts: postService.getPosts({ limit: 1, skip: 0 }),
+        todos: todoService.getTodosByUser(user.id, { limit: 1, skip: 0 }),
+      }).pipe(
+        catchError(() => {
+          patchState(store, { errorMessage: 'Could not load dashboard statistics.' });
+          return of(null);
+        }),
+        finalize(() => patchState(store, { isLoading: false }))
+      ).subscribe(result => {
+        if (!result) return;
 
-    this.patchState({ isLoading: true, errorMessage: '' });
-
-    forkJoin({
-      products: this.productService.getProducts({ limit: 1, skip: 0 }),
-      posts: this.postService.getPosts({ limit: 1, skip: 0 }),
-      todos: this.todoService.getTodosByUser(user.id, { limit: 1, skip: 0 }),
-    }).pipe(
-      catchError(() => {
-        this.patchState({ errorMessage: 'Could not load dashboard statistics.' });
-        return of(null);
-      }),
-      finalize(() => this.patchState({ isLoading: false }))
-    ).subscribe(result => {
-      if (!result) return;
-
-      this.patchState({
-        stats: {
-          products: result.products.total,
-          posts: result.posts.total,
-          todos: result.todos.total,
-        },
+        patchState(store, {
+          stats: {
+            products: result.products.total,
+            posts: result.posts.total,
+            todos: result.todos.total,
+          },
+        });
       });
-    });
-  }
+    },
+  }))
+);
 
-  private patchState(statePatch: Partial<DashboardState>): void {
-    this.state.update(state => ({
-      ...state,
-      ...statePatch,
-    }));
-  }
-}
+export type DashboardStoreInstance = InstanceType<typeof DashboardStore>;

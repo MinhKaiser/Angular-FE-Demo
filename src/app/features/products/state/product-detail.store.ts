@@ -1,4 +1,5 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { inject } from '@angular/core';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { catchError, finalize, of } from 'rxjs';
 import { ProductService } from '@core/services';
 import { Product } from '@shared/models';
@@ -15,39 +16,29 @@ const initialState: ProductDetailState = {
   errorMessage: '',
 };
 
-@Injectable()
-export class ProductDetailStore {
-  private readonly productService = inject(ProductService);
-  private readonly state = signal<ProductDetailState>(initialState);
+export const ProductDetailStore = signalStore(
+  withState(initialState),
+  withMethods((store, productService = inject(ProductService)) => ({
+    loadProduct(productId: number): void {
+      if (!Number.isInteger(productId) || productId <= 0) {
+        patchState(store, {
+          isLoading: false,
+          errorMessage: 'Invalid product id.',
+        });
+        return;
+      }
 
-  readonly product = computed(() => this.state().product);
-  readonly isLoading = computed(() => this.state().isLoading);
-  readonly errorMessage = computed(() => this.state().errorMessage);
+      patchState(store, { isLoading: true, errorMessage: '' });
 
-  loadProduct(productId: number): void {
-    if (!Number.isInteger(productId) || productId <= 0) {
-      this.patchState({
-        isLoading: false,
-        errorMessage: 'Invalid product id.',
-      });
-      return;
-    }
+      productService.getProduct(productId).pipe(
+        catchError(() => {
+          patchState(store, { errorMessage: 'Could not load product details.' });
+          return of(null);
+        }),
+        finalize(() => patchState(store, { isLoading: false }))
+      ).subscribe(product => patchState(store, { product }));
+    },
+  }))
+);
 
-    this.patchState({ isLoading: true, errorMessage: '' });
-
-    this.productService.getProduct(productId).pipe(
-      catchError(() => {
-        this.patchState({ errorMessage: 'Could not load product details.' });
-        return of(null);
-      }),
-      finalize(() => this.patchState({ isLoading: false }))
-    ).subscribe(product => this.patchState({ product }));
-  }
-
-  private patchState(statePatch: Partial<ProductDetailState>): void {
-    this.state.update(state => ({
-      ...state,
-      ...statePatch,
-    }));
-  }
-}
+export type ProductDetailStoreInstance = InstanceType<typeof ProductDetailStore>;

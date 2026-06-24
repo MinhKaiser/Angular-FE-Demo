@@ -1,4 +1,5 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { inject } from '@angular/core';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { PostService } from '@core/services';
 import { Comment, Post } from '@shared/models';
@@ -17,50 +18,39 @@ const initialState: PostDetailState = {
   errorMessage: '',
 };
 
-@Injectable()
-export class PostDetailStore {
-  private readonly postService = inject(PostService);
-  private readonly state = signal<PostDetailState>(initialState);
+export const PostDetailStore = signalStore(
+  withState(initialState),
+  withMethods((store, postService = inject(PostService)) => ({
+    loadPost(postId: number): void {
+      if (!Number.isInteger(postId) || postId <= 0) {
+        patchState(store, {
+          isLoading: false,
+          errorMessage: 'Invalid post id.',
+        });
+        return;
+      }
 
-  readonly post = computed(() => this.state().post);
-  readonly comments = computed(() => this.state().comments);
-  readonly isLoading = computed(() => this.state().isLoading);
-  readonly errorMessage = computed(() => this.state().errorMessage);
+      patchState(store, { isLoading: true, errorMessage: '' });
 
-  loadPost(postId: number): void {
-    if (!Number.isInteger(postId) || postId <= 0) {
-      this.patchState({
-        isLoading: false,
-        errorMessage: 'Invalid post id.',
+      forkJoin({
+        post: postService.getPost(postId),
+        comments: postService.getPostComments(postId),
+      }).pipe(
+        catchError(() => {
+          patchState(store, { errorMessage: 'Could not load post details.' });
+          return of(null);
+        }),
+        finalize(() => patchState(store, { isLoading: false }))
+      ).subscribe(result => {
+        if (!result) return;
+
+        patchState(store, {
+          post: result.post,
+          comments: result.comments.comments,
+        });
       });
-      return;
-    }
+    },
+  }))
+);
 
-    this.patchState({ isLoading: true, errorMessage: '' });
-
-    forkJoin({
-      post: this.postService.getPost(postId),
-      comments: this.postService.getPostComments(postId),
-    }).pipe(
-      catchError(() => {
-        this.patchState({ errorMessage: 'Could not load post details.' });
-        return of(null);
-      }),
-      finalize(() => this.patchState({ isLoading: false }))
-    ).subscribe(result => {
-      if (!result) return;
-
-      this.patchState({
-        post: result.post,
-        comments: result.comments.comments,
-      });
-    });
-  }
-
-  private patchState(statePatch: Partial<PostDetailState>): void {
-    this.state.update(state => ({
-      ...state,
-      ...statePatch,
-    }));
-  }
-}
+export type PostDetailStoreInstance = InstanceType<typeof PostDetailStore>;

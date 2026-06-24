@@ -1,4 +1,5 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { catchError, finalize, of } from 'rxjs';
 import { AuthService, TodoService } from '@core/services';
 import { Todo, TodosResponse } from '@shared/models';
@@ -19,121 +20,109 @@ const initialState: TodosState = {
   updatingTodoIds: new Set(),
 };
 
-@Injectable()
-export class TodosStore {
-  private readonly todoService = inject(TodoService);
-  private readonly authService = inject(AuthService);
-  private readonly state = signal<TodosState>(initialState);
+export const TodosStore = signalStore(
+  withState(initialState),
+  withComputed(({ todos }) => ({
+    completedCount: computed(() => todos().filter(todo => todo.completed).length),
+  })),
+  withMethods((store, todoService = inject(TodoService), authService = inject(AuthService)) => {
+    const setUpdating = (todoId: number, isUpdating: boolean): void => {
+      const nextUpdatingIds = new Set(store.updatingTodoIds());
+      if (isUpdating) {
+        nextUpdatingIds.add(todoId);
+      } else {
+        nextUpdatingIds.delete(todoId);
+      }
 
-  readonly todos = computed(() => this.state().todos);
-  readonly isLoading = computed(() => this.state().isLoading);
-  readonly isSaving = computed(() => this.state().isSaving);
-  readonly errorMessage = computed(() => this.state().errorMessage);
-  readonly completedCount = computed(() => this.todos().filter(todo => todo.completed).length);
+      patchState(store, { updatingTodoIds: nextUpdatingIds });
+    };
 
-  loadTodos(): void {
-    const user = this.authService.user();
-    if (!user) {
-      this.patchState({
-        errorMessage: 'Please sign in to load todos.',
-        isLoading: false,
-      });
-      return;
-    }
+    return {
+      loadTodos(): void {
+        const user = authService.user();
+        if (!user) {
+          patchState(store, {
+            errorMessage: 'Please sign in to load todos.',
+            isLoading: false,
+          });
+          return;
+        }
 
-    this.patchState({ isLoading: true, errorMessage: '' });
+        patchState(store, { isLoading: true, errorMessage: '' });
 
-    this.todoService.getTodosByUser(user.id, { limit: 50, skip: 0 }).pipe(
-      catchError(() => {
-        this.patchState({ errorMessage: 'Could not load todos from DummyJSON.' });
-        return of<TodosResponse>({ todos: [], total: 0, skip: 0, limit: 50 });
-      }),
-      finalize(() => this.patchState({ isLoading: false }))
-    ).subscribe(response => this.patchState({ todos: response.todos }));
-  }
+        todoService.getTodosByUser(user.id, { limit: 50, skip: 0 }).pipe(
+          catchError(() => {
+            patchState(store, { errorMessage: 'Could not load todos from DummyJSON.' });
+            return of<TodosResponse>({ todos: [], total: 0, skip: 0, limit: 50 });
+          }),
+          finalize(() => patchState(store, { isLoading: false }))
+        ).subscribe(response => patchState(store, { todos: response.todos }));
+      },
+      addTodo(todoText: string): void {
+        const user = authService.user();
+        const normalizedTodo = todoText.trim();
 
-  addTodo(todoText: string): void {
-    const user = this.authService.user();
-    const normalizedTodo = todoText.trim();
+        if (!user || !normalizedTodo) {
+          return;
+        }
 
-    if (!user || !normalizedTodo) {
-      return;
-    }
+        patchState(store, { isSaving: true, errorMessage: '' });
 
-    this.patchState({ isSaving: true, errorMessage: '' });
+        todoService.addTodo({
+          todo: normalizedTodo,
+          completed: false,
+          userId: user.id,
+        }).pipe(
+          catchError(() => {
+            patchState(store, { errorMessage: 'Could not create todo.' });
+            return of(null);
+          }),
+          finalize(() => patchState(store, { isSaving: false }))
+        ).subscribe(todo => {
+          if (!todo) return;
 
-    this.todoService.addTodo({
-      todo: normalizedTodo,
-      completed: false,
-      userId: user.id,
-    }).pipe(
-      catchError(() => {
-        this.patchState({ errorMessage: 'Could not create todo.' });
-        return of(null);
-      }),
-      finalize(() => this.patchState({ isSaving: false }))
-    ).subscribe(todo => {
-      if (!todo) return;
+          patchState(store, { todos: [todo, ...store.todos()] });
+        });
+      },
+      toggleTodo(todo: Todo, completed: boolean): void {
+        setUpdating(todo.id, true);
+        patchState(store, { errorMessage: '' });
 
-      this.patchState({ todos: [todo, ...this.state().todos] });
-    });
-  }
+        todoService.updateTodo(todo.id, { completed }).pipe(
+          catchError(() => {
+            patchState(store, { errorMessage: 'Could not update todo.' });
+            return of({ ...todo, completed: todo.completed });
+          }),
+          finalize(() => setUpdating(todo.id, false))
+        ).subscribe(updatedTodo => {
+          patchState(store, {
+            todos: store.todos().map(item => item.id === todo.id ? updatedTodo : item),
+          });
+        });
+      },
+      deleteTodo(todo: Todo): void {
+        setUpdating(todo.id, true);
+        patchState(store, { errorMessage: '' });
 
-  toggleTodo(todo: Todo, completed: boolean): void {
-    this.setUpdating(todo.id, true);
-    this.patchState({ errorMessage: '' });
+        todoService.deleteTodo(todo.id).pipe(
+          catchError(() => {
+            patchState(store, { errorMessage: 'Could not delete todo.' });
+            return of(null);
+          }),
+          finalize(() => setUpdating(todo.id, false))
+        ).subscribe(response => {
+          if (!response) return;
 
-    this.todoService.updateTodo(todo.id, { completed }).pipe(
-      catchError(() => {
-        this.patchState({ errorMessage: 'Could not update todo.' });
-        return of({ ...todo, completed: todo.completed });
-      }),
-      finalize(() => this.setUpdating(todo.id, false))
-    ).subscribe(updatedTodo => {
-      this.patchState({
-        todos: this.state().todos.map(item => item.id === todo.id ? updatedTodo : item),
-      });
-    });
-  }
+          patchState(store, {
+            todos: store.todos().filter(item => item.id !== todo.id),
+          });
+        });
+      },
+      isUpdating(todoId: number): boolean {
+        return store.updatingTodoIds().has(todoId);
+      },
+    };
+  })
+);
 
-  deleteTodo(todo: Todo): void {
-    this.setUpdating(todo.id, true);
-    this.patchState({ errorMessage: '' });
-
-    this.todoService.deleteTodo(todo.id).pipe(
-      catchError(() => {
-        this.patchState({ errorMessage: 'Could not delete todo.' });
-        return of(null);
-      }),
-      finalize(() => this.setUpdating(todo.id, false))
-    ).subscribe(response => {
-      if (!response) return;
-
-      this.patchState({
-        todos: this.state().todos.filter(item => item.id !== todo.id),
-      });
-    });
-  }
-
-  isUpdating(todoId: number): boolean {
-    return this.state().updatingTodoIds.has(todoId);
-  }
-
-  private setUpdating(todoId: number, isUpdating: boolean): void {
-    const nextUpdatingIds = new Set(this.state().updatingTodoIds);
-    if (isUpdating) {
-      nextUpdatingIds.add(todoId);
-    } else {
-      nextUpdatingIds.delete(todoId);
-    }
-
-    this.patchState({ updatingTodoIds: nextUpdatingIds });
-  }
-
-  private patchState(statePatch: Partial<TodosState>): void {
-    this.state.update(state => ({
-      ...state,
-      ...statePatch,
-    }));
-  }
-}
+export type TodosStoreInstance = InstanceType<typeof TodosStore>;

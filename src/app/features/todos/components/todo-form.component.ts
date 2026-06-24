@@ -1,27 +1,44 @@
 import { Component, input, output } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { IgxButtonDirective } from 'igniteui-angular/directives';
 
 @Component({
   selector: 'app-todo-form',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, IgxButtonDirective],
   template: `
-    <form (ngSubmit)="submitTodo()" class="mb-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_auto]">
+    <form (ngSubmit)="submitTodo()" class="todo-form card">
       <input
         type="text"
         [formControl]="todoControl"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
+        class="field"
         placeholder="Add a new todo"
       />
       <button
+        igxButton="contained"
         type="submit"
-        class="rounded-md bg-violet-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-800 disabled:bg-slate-400"
+        class="primary-button"
         [disabled]="todoControl.invalid || isSaving()"
       >
         Add todo
       </button>
     </form>
   `,
+  styles: [`
+    .todo-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+    }
+
+    @media (max-width: 560px) {
+      .todo-form {
+        grid-template-columns: 1fr;
+      }
+    }
+  `],
 })
 export class TodoFormComponent {
   readonly isSaving = input(false);

@@ -7,17 +7,17 @@ import { Comment, Post } from '@shared/models';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <article *ngIf="post() as item" class="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-      <div class="mb-4 flex flex-wrap gap-2">
-        <span *ngFor="let tag of item.tags" class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+    <article *ngIf="post() as item" class="post-detail card">
+      <div class="post-detail__tags">
+        <span *ngFor="let tag of item.tags" class="chip">
           {{ tag }}
         </span>
       </div>
 
-      <h1 class="text-3xl font-bold text-slate-950">{{ item.title }}</h1>
-      <p class="mt-5 text-base leading-8 text-slate-700">{{ item.body }}</p>
+      <h1>{{ item.title }}</h1>
+      <p class="post-detail__body">{{ item.body }}</p>
 
-      <div class="mt-8 flex flex-wrap gap-4 border-t border-slate-100 pt-5 text-sm text-slate-500">
+      <div class="post-detail__metrics">
         <span>{{ item.views }} views</span>
         <span>{{ item.reactions.likes }} likes</span>
         <span>{{ item.reactions.dislikes }} dislikes</span>
@@ -25,23 +25,105 @@ import { Comment, Post } from '@shared/models';
       </div>
     </article>
 
-    <section class="mt-8">
-      <h2 class="text-xl font-semibold text-slate-950">Comments</h2>
-      <div class="mt-4 space-y-3">
-        <article *ngFor="let comment of comments(); trackBy: trackByCommentId" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <p class="font-semibold text-slate-950">{{ comment.user.fullName }}</p>
-            <p class="text-xs text-slate-500">{{ comment.likes }} likes</p>
+    <section class="comments">
+      <h2>Comments</h2>
+      <div class="comments__list">
+        <article *ngFor="let comment of comments(); trackBy: trackByCommentId" class="comment-card card">
+          <div class="comment-card__header">
+            <p>{{ comment.user.fullName }}</p>
+            <p class="muted">{{ comment.likes }} likes</p>
           </div>
-          <p class="mt-3 text-sm leading-6 text-slate-600">{{ comment.body }}</p>
+          <p class="comment-card__body">{{ comment.body }}</p>
         </article>
 
-        <div *ngIf="comments().length === 0" class="rounded-lg border border-dashed border-slate-300 bg-white py-10 text-center text-sm text-slate-500">
+        <div *ngIf="comments().length === 0" class="empty-state">
           No comments found.
         </div>
       </div>
     </section>
   `,
+  styles: [`
+    .post-detail {
+      padding: 2rem;
+    }
+
+    .post-detail__tags,
+    .post-detail__metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .post-detail h1 {
+      margin: 1rem 0 0;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.08;
+    }
+
+    .post-detail__body {
+      margin: 1.25rem 0 0;
+      color: #334155;
+      font-size: 1rem;
+      line-height: 1.85;
+    }
+
+    .post-detail__metrics {
+      margin-top: 2rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--app-border-soft);
+      color: var(--app-text-muted);
+      font-size: 0.9rem;
+    }
+
+    .comments {
+      margin-top: 2rem;
+    }
+
+    .comments h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .comments__list {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .comment-card {
+      padding: 1.25rem;
+    }
+
+    .comment-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .comment-card__header p {
+      margin: 0;
+      font-weight: 800;
+    }
+
+    .comment-card__body {
+      margin: 0.75rem 0 0;
+      color: var(--app-text-muted);
+      font-size: 0.94rem;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 560px) {
+      .post-detail {
+        padding: 1.25rem;
+      }
+
+      .comment-card__header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  `],
 })
 export class PostDetailViewComponent {
   readonly post = input.required<Post | null>();

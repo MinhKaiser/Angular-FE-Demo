@@ -8,14 +8,25 @@ import { HeaderComponent, FooterComponent } from '@shared/components';
   standalone: true,
   imports: [CommonModule, RouterOutlet, HeaderComponent, FooterComponent],
   template: `
-    <div class="flex flex-col min-h-screen">
+    <div class="app-layout">
       <app-header></app-header>
-      <main class="flex-1">
+      <main class="app-main">
         <router-outlet></router-outlet>
       </main>
       <app-footer></app-footer>
     </div>
   `,
+  styles: [`
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    .app-main {
+      flex: 1;
+    }
+  `],
 })
 export class AppComponent {
   title = 'angular-store';

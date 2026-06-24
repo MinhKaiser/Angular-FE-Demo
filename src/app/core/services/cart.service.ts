@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   Cart,
@@ -14,7 +14,7 @@ import { HttpClientService } from './http-client.service';
   providedIn: 'root',
 })
 export class CartService {
-  constructor(private httpClient: HttpClientService) {}
+  private readonly httpClient = inject(HttpClientService);
 
   getCarts(query?: PaginationQuery): Observable<CartsResponse> {
     return this.httpClient.get<CartsResponse>('/carts', query);

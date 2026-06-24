@@ -2,18 +2,19 @@ import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ProductCategoryOption } from '../state/products.store';
+import { IgxButtonDirective } from 'igniteui-angular/directives';
 
 @Component({
   selector: 'app-product-filter',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, IgxButtonDirective],
   template: `
-    <div class="grid gap-3 sm:grid-cols-[minmax(220px,1fr)_180px_auto]">
+    <div class="filter-bar">
       <input
         type="search"
         [formControl]="searchControl"
         (keyup.enter)="submitSearch()"
-        class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+        class="field"
         placeholder="Search by title"
       />
 
@@ -21,7 +22,7 @@ import { ProductCategoryOption } from '../state/products.store';
         #categorySelect
         [value]="selectedCategory()"
         (change)="categoryChange.emit(categorySelect.value)"
-        class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+        class="field"
       >
         <option value="">All categories</option>
         <option *ngFor="let category of categories()" [value]="category.slug">
@@ -30,15 +31,29 @@ import { ProductCategoryOption } from '../state/products.store';
       </select>
 
       <button
+        igxButton="contained"
         type="button"
         (click)="submitSearch()"
-        class="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:bg-slate-400"
+        class="primary-button"
         [disabled]="isLoading()"
       >
         Search
       </button>
     </div>
   `,
+  styles: [`
+    .filter-bar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 180px auto;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 760px) {
+      .filter-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+  `],
 })
 export class ProductFilterComponent {
   readonly categories = input.required<readonly ProductCategoryOption[]>();

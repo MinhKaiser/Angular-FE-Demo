@@ -2,18 +2,19 @@ import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { PostTag } from '@shared/models';
+import { IgxButtonDirective } from 'igniteui-angular/directives';
 
 @Component({
   selector: 'app-post-filter',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, IgxButtonDirective],
   template: `
-    <div class="grid gap-3 sm:grid-cols-[minmax(220px,1fr)_180px_auto]">
+    <div class="filter-bar">
       <input
         type="search"
         [formControl]="searchControl"
         (keyup.enter)="submitSearch()"
-        class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+        class="field"
         placeholder="Search posts"
       />
 
@@ -21,22 +22,36 @@ import { PostTag } from '@shared/models';
         #tagSelect
         [value]="selectedTag()"
         (change)="tagChange.emit(tagSelect.value)"
-        class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+        class="field"
       >
         <option value="">All tags</option>
         <option *ngFor="let tag of tags()" [value]="tag.slug">{{ tag.name }}</option>
       </select>
 
       <button
+        igxButton="contained"
         type="button"
         (click)="submitSearch()"
-        class="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:bg-slate-400"
+        class="primary-button"
         [disabled]="isLoading()"
       >
         Search
       </button>
     </div>
   `,
+  styles: [`
+    .filter-bar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 180px auto;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 760px) {
+      .filter-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+  `],
 })
 export class PostFilterComponent {
   readonly tags = input.required<readonly PostTag[]>();

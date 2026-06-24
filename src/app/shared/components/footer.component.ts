@@ -6,16 +6,54 @@ import { RouterLink } from '@angular/router';
   standalone: true,
   imports: [RouterLink],
   template: `
-    <footer class="border-t border-slate-200 bg-white">
-      <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+    <footer class="site-footer">
+      <div class="site-footer__inner">
         <p>Dummy Shop training app</p>
-        <div class="flex gap-4">
-          <a routerLink="/products" class="hover:text-slate-950">Products</a>
-          <a routerLink="/posts" class="hover:text-slate-950">Posts</a>
-          <a routerLink="/todos" class="hover:text-slate-950">Todos</a>
+        <div class="site-footer__links">
+          <a routerLink="/products">Products</a>
+          <a routerLink="/posts">Posts</a>
+          <a routerLink="/todos">Todos</a>
         </div>
       </div>
     </footer>
   `,
+  styles: [`
+    .site-footer {
+      border-top: 1px solid var(--app-border-soft);
+      background: var(--app-surface);
+    }
+
+    .site-footer__inner {
+      display: flex;
+      width: min(100% - 2rem, 1120px);
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-inline: auto;
+      padding-block: 1.5rem;
+      color: var(--app-text-muted);
+      font-size: 0.9rem;
+    }
+
+    .site-footer__inner p {
+      margin: 0;
+    }
+
+    .site-footer__links {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .site-footer__links a:hover {
+      color: var(--app-text);
+    }
+
+    @media (max-width: 600px) {
+      .site-footer__inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  `],
 })
 export class FooterComponent {}

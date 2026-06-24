@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Post } from '@shared/models';
 import { PostCardComponent } from './components/post-card.component';
 import { PostFilterComponent } from './components/post-filter.component';
-import { PostsStore } from './state/posts.store';
+import { PostsStore, type PostsStoreInstance } from './state/posts.store';
 
 @Component({
   selector: 'app-posts-list',
@@ -11,13 +11,13 @@ import { PostsStore } from './state/posts.store';
   imports: [CommonModule, PostCardComponent, PostFilterComponent],
   providers: [PostsStore],
   template: `
-    <section class="min-h-screen bg-slate-50">
-      <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-        <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p class="text-sm font-medium uppercase tracking-wide text-emerald-700">DummyJSON posts</p>
-            <h1 class="mt-1 text-3xl font-bold text-slate-950">Posts</h1>
-            <p class="mt-2 text-sm text-slate-600">{{ store.total() }} posts available</p>
+    <section class="app-page posts-page">
+      <div class="app-shell app-shell--narrow">
+        <div class="content-header">
+          <div class="page-heading">
+            <p class="page-heading__eyebrow">DummyJSON posts</p>
+            <h1>Posts</h1>
+            <p class="page-heading__meta">{{ store.total() }} posts available</p>
           </div>
 
           <app-post-filter
@@ -29,31 +29,42 @@ import { PostsStore } from './state/posts.store';
           />
         </div>
 
-        <div *ngIf="store.errorMessage()" class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div *ngIf="store.errorMessage()" class="alert">
           {{ store.errorMessage() }}
         </div>
 
-        <div *ngIf="store.isLoading()" class="flex min-h-64 items-center justify-center">
-          <div class="h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700"></div>
+        <div *ngIf="store.isLoading()" class="spinner-wrap">
+          <div class="spinner"></div>
         </div>
 
-        <div *ngIf="!store.isLoading() && store.posts().length > 0" class="space-y-4">
+        <div *ngIf="!store.isLoading() && store.posts().length > 0" class="post-list">
           <app-post-card
             *ngFor="let post of store.posts(); trackBy: trackByPostId"
             [post]="post"
           />
         </div>
 
-        <div *ngIf="!store.isLoading() && store.posts().length === 0" class="rounded-lg border border-dashed border-slate-300 bg-white py-16 text-center">
-          <p class="font-medium text-slate-900">No posts found</p>
-          <p class="mt-1 text-sm text-slate-500">Try another keyword or tag.</p>
+        <div *ngIf="!store.isLoading() && store.posts().length === 0" class="empty-state">
+          <p><strong>No posts found</strong></p>
+          <p class="muted">Try another keyword or tag.</p>
         </div>
       </div>
     </section>
   `,
+  styles: [`
+    .posts-page {
+      --section-color: var(--app-success);
+      --section-color-dark: var(--app-success-dark);
+    }
+
+    .post-list {
+      display: grid;
+      gap: 1rem;
+    }
+  `],
 })
 export class PostsListComponent implements OnInit {
-  protected readonly store = inject(PostsStore);
+  protected readonly store: PostsStoreInstance = inject(PostsStore);
 
   ngOnInit(): void {
     this.store.loadInitialData();

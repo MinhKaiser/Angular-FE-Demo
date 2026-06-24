@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   CreateTodoRequest,
@@ -14,7 +14,7 @@ import { HttpClientService } from './http-client.service';
   providedIn: 'root',
 })
 export class TodoService {
-  constructor(private httpClient: HttpClientService) {}
+  private readonly httpClient = inject(HttpClientService);
 
   getTodos(query?: PaginationQuery): Observable<TodosResponse> {
     return this.httpClient.get<TodosResponse>('/todos', query);

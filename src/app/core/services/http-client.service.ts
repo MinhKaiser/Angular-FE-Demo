@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { getEnvironmentConfig } from './environment.service';
@@ -12,10 +12,9 @@ export type QueryParams = PaginationQuery | QueryRecord;
   providedIn: 'root',
 })
 export class HttpClientService {
+  private readonly http = inject(HttpClient);
   private readonly config = getEnvironmentConfig();
   private readonly baseUrl = this.config.apiUrl;
-
-  constructor(private http: HttpClient) {}
 
   get<TResponse>(endpoint: string, query?: QueryParams): Observable<TResponse> {
     return this.http.get<TResponse>(this.buildUrl(endpoint), {

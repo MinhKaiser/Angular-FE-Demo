@@ -9,18 +9,18 @@ import { TruncatePipe } from '@shared/pipes';
   standalone: true,
   imports: [CommonModule, RouterLink, TruncatePipe],
   template: `
-    <article class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
-      <div class="mb-3 flex flex-wrap gap-2">
-        <span *ngFor="let tag of post().tags" class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+    <article class="post-card card">
+      <div class="post-card__tags">
+        <span *ngFor="let tag of post().tags" class="chip">
           {{ tag }}
         </span>
       </div>
 
-      <h2 class="text-xl font-semibold text-slate-950">{{ post().title }}</h2>
-      <p class="mt-2 text-sm leading-6 text-slate-600">{{ post().body | appTruncate: 220 }}</p>
+      <h2>{{ post().title }}</h2>
+      <p class="post-card__body">{{ post().body | appTruncate: 220 }}</p>
 
-      <div class="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex gap-4 text-sm text-slate-500">
+      <div class="post-card__footer">
+        <div class="post-card__metrics">
           <span>{{ post().views }} views</span>
           <span>{{ post().reactions.likes }} likes</span>
           <span>{{ post().reactions.dislikes }} dislikes</span>
@@ -28,13 +28,64 @@ import { TruncatePipe } from '@shared/pipes';
 
         <a
           [routerLink]="['/posts', post().id]"
-          class="inline-flex items-center justify-center rounded-md border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+          class="action-link"
         >
           Read more
         </a>
       </div>
     </article>
   `,
+  styles: [`
+    .post-card {
+      padding: 1.5rem;
+      transition: box-shadow 0.16s ease;
+    }
+
+    .post-card:hover {
+      box-shadow: 0 10px 24px rgb(15 23 42 / 10%);
+    }
+
+    .post-card__tags,
+    .post-card__metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .post-card h2 {
+      margin: 0.75rem 0 0;
+      font-size: 1.25rem;
+    }
+
+    .post-card__body {
+      margin: 0.5rem 0 0;
+      color: var(--app-text-muted);
+      font-size: 0.94rem;
+      line-height: 1.65;
+    }
+
+    .post-card__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--app-border-soft);
+    }
+
+    .post-card__metrics {
+      color: var(--app-text-muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 640px) {
+      .post-card__footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  `],
 })
 export class PostCardComponent {
   readonly post = input.required<Post>();

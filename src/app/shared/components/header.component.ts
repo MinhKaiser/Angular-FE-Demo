@@ -2,45 +2,47 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@core/services';
+import { IgxButtonDirective } from 'igniteui-angular/directives';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, IgxButtonDirective],
   template: `
-    <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <a routerLink="/" class="flex items-center gap-3">
-          <span class="flex h-9 w-9 items-center justify-center rounded-md bg-slate-950 text-sm font-bold text-white">DJ</span>
-          <span class="text-lg font-bold text-slate-950">Dummy Shop</span>
+    <header class="site-header">
+      <nav class="site-header__nav">
+        <a routerLink="/" class="brand">
+          <span class="brand__mark">DJ</span>
+          <span class="brand__name">Dummy Shop</span>
         </a>
 
-        <div class="hidden items-center gap-6 md:flex">
-          <a routerLink="/products" routerLinkActive="text-blue-700" class="text-sm font-medium text-slate-600 transition hover:text-blue-700">
+        <div class="site-header__links">
+          <a routerLink="/products" routerLinkActive="is-active" class="site-header__link">
             Products
           </a>
-          <a routerLink="/posts" routerLinkActive="text-emerald-700" class="text-sm font-medium text-slate-600 transition hover:text-emerald-700">
+          <a routerLink="/posts" routerLinkActive="is-active" class="site-header__link">
             Posts
           </a>
-          <a routerLink="/todos" routerLinkActive="text-violet-700" class="text-sm font-medium text-slate-600 transition hover:text-violet-700">
+          <a routerLink="/todos" routerLinkActive="is-active" class="site-header__link">
             Todos
           </a>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="site-header__actions">
           <ng-container *ngIf="isAuthenticated(); else signInLink">
-            <span class="hidden max-w-40 truncate text-sm text-slate-600 sm:inline">{{ displayName() }}</span>
+            <span class="site-header__user">{{ displayName() }}</span>
             <button
+              igxButton="outlined"
               type="button"
               (click)="onLogout()"
-              class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              class="outline-button"
             >
               Logout
             </button>
           </ng-container>
 
           <ng-template #signInLink>
-            <a routerLink="/auth/login" class="rounded-md bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+            <a routerLink="/auth/login" class="primary-button">
               Sign in
             </a>
           </ng-template>
@@ -48,6 +50,90 @@ import { AuthService } from '@core/services';
       </nav>
     </header>
   `,
+  styles: [`
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--app-border-soft);
+      background: rgb(255 255 255 / 94%);
+      backdrop-filter: blur(10px);
+    }
+
+    .site-header__nav {
+      display: flex;
+      width: min(100% - 2rem, 1120px);
+      height: 4rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      margin-inline: auto;
+    }
+
+    .brand,
+    .site-header__links,
+    .site-header__actions {
+      display: flex;
+      align-items: center;
+    }
+
+    .brand {
+      gap: 0.75rem;
+    }
+
+    .brand__mark {
+      display: grid;
+      width: 2.25rem;
+      height: 2.25rem;
+      place-items: center;
+      border-radius: var(--app-radius);
+      color: #fff;
+      background: var(--app-text);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .brand__name {
+      color: var(--app-text);
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .site-header__links {
+      gap: 1.5rem;
+    }
+
+    .site-header__link {
+      color: var(--app-text-muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .site-header__link:hover,
+    .site-header__link.is-active {
+      color: var(--app-primary);
+    }
+
+    .site-header__actions {
+      gap: 0.75rem;
+    }
+
+    .site-header__user {
+      max-width: 10rem;
+      overflow: hidden;
+      color: var(--app-text-muted);
+      font-size: 0.9rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 760px) {
+      .site-header__links,
+      .site-header__user {
+        display: none;
+      }
+    }
+  `],
 })
 export class HeaderComponent {
   private readonly authService = inject(AuthService);

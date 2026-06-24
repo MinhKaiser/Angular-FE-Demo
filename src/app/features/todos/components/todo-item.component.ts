@@ -1,40 +1,72 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 import { Todo } from '@shared/models';
+import { IgxButtonDirective } from 'igniteui-angular/directives';
 
 @Component({
   selector: 'app-todo-item',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, IgxButtonDirective],
   template: `
-    <article class="grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article class="todo-item card">
       <input
         #completedInput
         type="checkbox"
         [checked]="todo().completed"
         [disabled]="isUpdating()"
         (change)="toggle.emit(completedInput.checked)"
-        class="h-5 w-5 rounded border-slate-300 text-violet-700 focus:ring-violet-600"
+        class="todo-item__checkbox"
       />
 
       <span
-        class="text-sm text-slate-900"
-        [class.line-through]="todo().completed"
-        [class.text-slate-400]="todo().completed"
+        class="todo-item__text"
+        [class.todo-item__text--done]="todo().completed"
       >
         {{ todo().todo }}
       </span>
 
       <button
+        igxButton="outlined"
         type="button"
         (click)="deleteTodo.emit()"
         [disabled]="isUpdating()"
-        class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:text-slate-400"
+        class="outline-button todo-item__delete"
       >
         Delete
       </button>
     </article>
   `,
+  styles: [`
+    .todo-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .todo-item__checkbox {
+      width: 1.25rem;
+      height: 1.25rem;
+      accent-color: var(--app-accent);
+    }
+
+    .todo-item__text {
+      color: var(--app-text);
+      font-size: 0.94rem;
+    }
+
+    .todo-item__text--done {
+      color: #94a3b8;
+      text-decoration: line-through;
+    }
+
+    .todo-item__delete {
+      min-height: 2rem;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.78rem;
+    }
+  `],
 })
 export class TodoItemComponent {
   readonly todo = input.required<Todo>();

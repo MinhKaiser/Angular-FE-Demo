@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, Observable, tap, throwError } from 'rxjs';
 import {
@@ -16,6 +16,7 @@ import { getEnvironmentConfig } from './environment.service';
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly http = inject(HttpClient);
   private readonly config = getEnvironmentConfig();
   private readonly baseUrl = this.config.apiUrl;
   private readonly storageKeys = {
@@ -34,12 +35,6 @@ export class AuthService {
     const user = this.user();
     return user ? `${user.firstName} ${user.lastName}` : '';
   });
-
-  constructor(private http: HttpClient) {
-    if (this.isTokenExpired()) {
-      this.clearSession();
-    }
-  }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     this.authState.update(state => ({ ...state, isLoading: true, error: null }));
@@ -133,12 +128,7 @@ export class AuthService {
     const token = this.getAccessToken();
     if (!token) return true;
 
-    try {
-      const payload = JSON.parse(atob(this.normalizeBase64Url(token.split('.')[1])));
-      return Date.now() >= payload.exp * 1000;
-    } catch {
-      return true;
-    }
+    return this.isTokenValueExpired(token);
   }
 
   clearSession(): void {
@@ -156,6 +146,18 @@ export class AuthService {
   private createInitialState(): AuthState {
     const accessToken = this.loadTokenFromStorage();
     const refreshToken = this.loadRefreshTokenFromStorage();
+
+    if (!accessToken || this.isTokenValueExpired(accessToken)) {
+      this.removeStoredAuth();
+      return {
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+      };
+    }
 
     return {
       user: this.loadUserFromStorage(),
@@ -227,6 +229,15 @@ export class AuthService {
   private normalizeBase64Url(value: string): string {
     const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
     return base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+  }
+
+  private isTokenValueExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(this.normalizeBase64Url(token.split('.')[1])));
+      return Date.now() >= payload.exp * 1000;
+    } catch {
+      return true;
+    }
   }
 
   private getErrorMessage(error: unknown, fallback: string): string {

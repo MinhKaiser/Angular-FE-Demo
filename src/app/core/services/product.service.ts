@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   Category,
@@ -15,7 +15,7 @@ import { HttpClientService } from './http-client.service';
   providedIn: 'root',
 })
 export class ProductService {
-  constructor(private httpClient: HttpClientService) {}
+  private readonly httpClient = inject(HttpClientService);
 
   getProducts(query?: PaginationQuery): Observable<ProductsResponse> {
     return this.httpClient.get<ProductsResponse>('/products', query);

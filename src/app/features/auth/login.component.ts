@@ -3,74 +3,167 @@ import { Component, OnInit, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, getEnvironmentConfig } from '@core/services';
+import { IgxButtonDirective } from 'igniteui-angular/directives';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, IgxButtonDirective],
   template: `
-    <section class="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <div class="w-full max-w-md rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-        <div class="mb-8">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-slate-950 text-sm font-bold text-white">DJ</div>
-          <h1 class="text-2xl font-bold text-slate-950">Sign in</h1>
-          <p class="mt-2 text-sm text-slate-600">Use a DummyJSON account to continue.</p>
+    <section class="login-page">
+      <div class="login-card card">
+        <div class="login-card__header">
+          <div class="login-card__mark">DJ</div>
+          <h1>Sign in</h1>
+          <p>Use a DummyJSON account to continue.</p>
         </div>
 
-        <div *ngIf="error()" class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div *ngIf="error()" class="alert">
           {{ error() }}
         </div>
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
-          <div>
-            <label for="username" class="mb-2 block text-sm font-medium text-slate-700">Username</label>
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+          <div class="login-form__field">
+            <label for="username">Username</label>
             <input
               id="username"
               type="text"
               formControlName="username"
-              class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+              class="field"
               autocomplete="username"
             />
-            <p *ngIf="isFieldInvalid('username')" class="mt-1 text-xs text-red-600">Username is required.</p>
+            <p *ngIf="isFieldInvalid('username')" class="login-form__error">Username is required.</p>
           </div>
 
-          <div>
-            <label for="password" class="mb-2 block text-sm font-medium text-slate-700">Password</label>
+          <div class="login-form__field">
+            <label for="password">Password</label>
             <input
               id="password"
               type="password"
               formControlName="password"
-              class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+              class="field"
               autocomplete="current-password"
             />
-            <p *ngIf="isFieldInvalid('password')" class="mt-1 text-xs text-red-600">Password is required.</p>
+            <p *ngIf="isFieldInvalid('password')" class="login-form__error">Password is required.</p>
           </div>
 
           <button
+            igxButton="contained"
             type="submit"
             [disabled]="isLoading() || loginForm.invalid"
-            class="w-full rounded-md bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:bg-slate-400"
+            class="primary-button login-form__submit"
           >
             {{ isLoading() ? 'Signing in...' : 'Sign in' }}
           </button>
         </form>
 
         <button
+          igxButton="outlined"
           *ngIf="demoCredentials"
           type="button"
           (click)="useDemoCredentials()"
-          class="mt-4 w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          class="outline-button login-card__demo-button"
         >
           Use demo credentials
         </button>
 
-        <div *ngIf="demoCredentials" class="mt-6 rounded-md bg-slate-50 p-4 text-sm text-slate-600">
-          <p><span class="font-semibold text-slate-900">Username:</span> {{ demoCredentials.username }}</p>
-          <p class="mt-1"><span class="font-semibold text-slate-900">Password:</span> {{ demoCredentials.password }}</p>
+        <div *ngIf="demoCredentials" class="demo-credentials">
+          <p><span>Username:</span> {{ demoCredentials.username }}</p>
+          <p><span>Password:</span> {{ demoCredentials.password }}</p>
         </div>
       </div>
     </section>
   `,
+  styles: [`
+    .login-page {
+      display: grid;
+      min-height: 100vh;
+      place-items: center;
+      padding: 2.5rem 1rem;
+      background: var(--app-bg);
+    }
+
+    .login-card {
+      width: min(100%, 420px);
+      padding: 2rem;
+    }
+
+    .login-card__header {
+      margin-bottom: 2rem;
+    }
+
+    .login-card__mark {
+      display: grid;
+      width: 3rem;
+      height: 3rem;
+      place-items: center;
+      margin-bottom: 1rem;
+      border-radius: var(--app-radius);
+      color: #fff;
+      background: var(--app-text);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .login-card h1,
+    .login-card p {
+      margin: 0;
+    }
+
+    .login-card h1 {
+      font-size: 1.65rem;
+    }
+
+    .login-card__header p,
+    .demo-credentials {
+      margin-top: 0.5rem;
+      color: var(--app-text-muted);
+      font-size: 0.9rem;
+    }
+
+    .login-form {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .login-form__field label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #334155;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .login-form__error {
+      margin: 0.35rem 0 0;
+      color: var(--app-danger);
+      font-size: 0.78rem;
+    }
+
+    .login-form__submit,
+    .login-card__demo-button {
+      width: 100%;
+    }
+
+    .login-card__demo-button {
+      margin-top: 1rem;
+    }
+
+    .demo-credentials {
+      padding: 1rem;
+      border-radius: var(--app-radius);
+      background: var(--app-surface-muted);
+    }
+
+    .demo-credentials p + p {
+      margin-top: 0.3rem;
+    }
+
+    .demo-credentials span {
+      color: var(--app-text);
+      font-weight: 800;
+    }
+  `],
 })
 export class LoginComponent implements OnInit {
   private readonly authService = inject(AuthService);

@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Todo } from '@shared/models';
 import { TodoFormComponent } from './components/todo-form.component';
 import { TodoItemComponent } from './components/todo-item.component';
-import { TodosStore } from './state/todos.store';
+import { TodosStore, type TodosStoreInstance } from './state/todos.store';
 
 @Component({
   selector: 'app-todos-list',
@@ -11,12 +11,12 @@ import { TodosStore } from './state/todos.store';
   imports: [CommonModule, TodoFormComponent, TodoItemComponent],
   providers: [TodosStore],
   template: `
-    <section class="min-h-screen bg-slate-50">
-      <div class="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        <div class="mb-8">
-          <p class="text-sm font-medium uppercase tracking-wide text-violet-700">DummyJSON todos</p>
-          <h1 class="mt-1 text-3xl font-bold text-slate-950">My Todos</h1>
-          <p class="mt-2 text-sm text-slate-600">{{ store.completedCount() }} of {{ store.todos().length }} completed</p>
+    <section class="app-page todos-page">
+      <div class="app-shell app-shell--compact">
+        <div class="page-heading">
+          <p class="page-heading__eyebrow">DummyJSON todos</p>
+          <h1>My Todos</h1>
+          <p class="page-heading__meta">{{ store.completedCount() }} of {{ store.todos().length }} completed</p>
         </div>
 
         <app-todo-form
@@ -24,15 +24,15 @@ import { TodosStore } from './state/todos.store';
           (addTodo)="store.addTodo($event)"
         />
 
-        <div *ngIf="store.errorMessage()" class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div *ngIf="store.errorMessage()" class="alert">
           {{ store.errorMessage() }}
         </div>
 
-        <div *ngIf="store.isLoading()" class="flex min-h-64 items-center justify-center">
-          <div class="h-12 w-12 animate-spin rounded-full border-4 border-violet-200 border-t-violet-700"></div>
+        <div *ngIf="store.isLoading()" class="spinner-wrap">
+          <div class="spinner"></div>
         </div>
 
-        <div *ngIf="!store.isLoading() && store.todos().length > 0" class="space-y-2">
+        <div *ngIf="!store.isLoading() && store.todos().length > 0" class="todos-list">
           <app-todo-item
             *ngFor="let todo of store.todos(); trackBy: trackByTodoId"
             [todo]="todo"
@@ -42,16 +42,27 @@ import { TodosStore } from './state/todos.store';
           />
         </div>
 
-        <div *ngIf="!store.isLoading() && store.todos().length === 0" class="rounded-lg border border-dashed border-slate-300 bg-white py-16 text-center">
-          <p class="font-medium text-slate-900">No todos found</p>
-          <p class="mt-1 text-sm text-slate-500">Create the first one above.</p>
+        <div *ngIf="!store.isLoading() && store.todos().length === 0" class="empty-state">
+          <p><strong>No todos found</strong></p>
+          <p class="muted">Create the first one above.</p>
         </div>
       </div>
     </section>
   `,
+  styles: [`
+    .todos-page {
+      --section-color: var(--app-accent);
+      --section-color-dark: var(--app-accent-dark);
+    }
+
+    .todos-list {
+      display: grid;
+      gap: 0.5rem;
+    }
+  `],
 })
 export class TodosListComponent implements OnInit {
-  protected readonly store = inject(TodosStore);
+  protected readonly store: TodosStoreInstance = inject(TodosStore);
 
   ngOnInit(): void {
     this.store.loadTodos();

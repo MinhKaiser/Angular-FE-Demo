@@ -1,4 +1,5 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { inject } from '@angular/core';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { catchError, finalize, of } from 'rxjs';
 import { PostService } from '@core/services';
 import { Post, PostsResponse, PostTag } from '@shared/models';
@@ -29,82 +30,67 @@ const initialState: PostsState = {
   errorMessage: '',
 };
 
-@Injectable()
-export class PostsStore {
-  private readonly postService = inject(PostService);
-  private readonly state = signal<PostsState>(initialState);
-
-  readonly posts = computed(() => this.state().posts);
-  readonly tags = computed(() => this.state().tags);
-  readonly total = computed(() => this.state().total);
-  readonly filters = computed(() => this.state().filters);
-  readonly isLoading = computed(() => this.state().isLoading);
-  readonly errorMessage = computed(() => this.state().errorMessage);
-
-  loadInitialData(): void {
-    this.loadTags();
-    this.loadPosts();
-  }
-
-  search(searchTerm: string): void {
-    this.patchFilters({ searchTerm: searchTerm.trim() });
-    this.loadPosts();
-  }
-
-  filterByTag(tag: string): void {
-    this.patchFilters({ tag });
-    this.loadPosts();
-  }
-
-  reload(): void {
-    this.loadPosts();
-  }
-
-  private loadPosts(): void {
-    const query = { limit: 20, skip: 0 };
-    const filters = this.state().filters;
-    const request = filters.searchTerm
-      ? this.postService.searchPosts(filters.searchTerm, query)
-      : filters.tag
-        ? this.postService.getPostsByTag(filters.tag, query)
-        : this.postService.getPosts(query);
-
-    this.patchState({ isLoading: true, errorMessage: '' });
-
-    request.pipe(
-      catchError(() => {
-        this.patchState({ errorMessage: 'Could not load posts from DummyJSON.' });
-        return of<PostsResponse>({ posts: [], total: 0, skip: 0, limit: query.limit });
-      }),
-      finalize(() => this.patchState({ isLoading: false }))
-    ).subscribe(response => {
-      this.patchState({
-        posts: response.posts,
-        total: response.total,
+export const PostsStore = signalStore(
+  withState(initialState),
+  withMethods((store, postService = inject(PostService)) => {
+    const patchFilters = (filters: Partial<PostFilters>): void => {
+      patchState(store, {
+        filters: {
+          ...store.filters(),
+          ...filters,
+        },
       });
-    });
-  }
+    };
 
-  private loadTags(): void {
-    this.postService.getPostTags().pipe(
-      catchError(() => of([]))
-    ).subscribe(tags => this.patchState({ tags }));
-  }
+    const loadPosts = (): void => {
+      const query = { limit: 20, skip: 0 };
+      const filters = store.filters();
+      const request = filters.searchTerm
+        ? postService.searchPosts(filters.searchTerm, query)
+        : filters.tag
+          ? postService.getPostsByTag(filters.tag, query)
+          : postService.getPosts(query);
 
-  private patchFilters(filters: Partial<PostFilters>): void {
-    this.state.update(state => ({
-      ...state,
-      filters: {
-        ...state.filters,
-        ...filters,
+      patchState(store, { isLoading: true, errorMessage: '' });
+
+      request.pipe(
+        catchError(() => {
+          patchState(store, { errorMessage: 'Could not load posts from DummyJSON.' });
+          return of<PostsResponse>({ posts: [], total: 0, skip: 0, limit: query.limit });
+        }),
+        finalize(() => patchState(store, { isLoading: false }))
+      ).subscribe(response => {
+        patchState(store, {
+          posts: response.posts,
+          total: response.total,
+        });
+      });
+    };
+
+    const loadTags = (): void => {
+      postService.getPostTags().pipe(
+        catchError(() => of([]))
+      ).subscribe(tags => patchState(store, { tags }));
+    };
+
+    return {
+      loadInitialData(): void {
+        loadTags();
+        loadPosts();
       },
-    }));
-  }
+      search(searchTerm: string): void {
+        patchFilters({ searchTerm: searchTerm.trim() });
+        loadPosts();
+      },
+      filterByTag(tag: string): void {
+        patchFilters({ tag });
+        loadPosts();
+      },
+      reload(): void {
+        loadPosts();
+      },
+    };
+  })
+);
 
-  private patchState(statePatch: Partial<PostsState>): void {
-    this.state.update(state => ({
-      ...state,
-      ...statePatch,
-    }));
-  }
-}
+export type PostsStoreInstance = InstanceType<typeof PostsStore>;

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   Comment,
@@ -14,7 +14,7 @@ import { HttpClientService } from './http-client.service';
   providedIn: 'root',
 })
 export class CommentService {
-  constructor(private httpClient: HttpClientService) {}
+  private readonly httpClient = inject(HttpClientService);
 
   getComments(query?: PaginationQuery): Observable<CommentsResponse> {
     return this.httpClient.get<CommentsResponse>('/comments', query);
