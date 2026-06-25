@@ -1,0 +1,270 @@
+<section class="app-page dashboard-page">
+  <div class="app-shell">
+    <div class="page-heading dashboard-heading">
+      <div>
+        <p class="page-heading__eyebrow">Ignite UI workspace</p>
+        <h1>Ignite UI dashboard with real component variety</h1>
+        <p class="page-heading__meta">
+          Select, combo, drop-down, slider, grid, icon and progress visuals are all running on live app data.
+        </p>
+      </div>
+
+      <div class="dashboard-heading__actions">
+        <button
+          type="button"
+          igxButton="contained"
+          class="dashboard-action-button"
+          [igxToggleAction]="quickActionsMenu"
+        >
+          <igx-icon>apps</igx-icon>
+          Quick actions
+        </button>
+
+        <igx-drop-down #quickActionsMenu>
+          <igx-drop-down-item *ngFor="let action of quickActions">
+            <div class="menu-item">
+              <igx-icon>{{ action.icon }}</igx-icon>
+              <div>
+                <strong>{{ action.label }}</strong>
+                <span>{{ action.description }}</span>
+              </div>
+            </div>
+          </igx-drop-down-item>
+        </igx-drop-down>
+      </div>
+    </div>
+
+    <div *ngIf="store.errorMessage()" class="alert">
+      {{ store.errorMessage() }}
+    </div>
+
+    <div class="stats-grid">
+      <app-dashboard-stat-card
+        label="Products"
+        [value]="store.stats().products"
+        code="PR"
+        tone="blue"
+        icon="inventory_2"
+      />
+      <app-dashboard-stat-card
+        label="Posts"
+        [value]="store.stats().posts"
+        code="PO"
+        tone="emerald"
+        icon="article"
+      />
+      <app-dashboard-stat-card
+        label="My todos"
+        [value]="store.stats().todos"
+        code="TD"
+        tone="violet"
+        icon="task_alt"
+      />
+      <app-dashboard-stat-card
+        label="User ID"
+        [value]="store.userId()"
+        code="US"
+        tone="amber"
+        icon="person"
+      />
+    </div>
+
+    <div class="dashboard-showcase">
+      <article class="card showcase-panel controls-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-eyebrow">Ignite inputs</p>
+            <h2>Control center</h2>
+          </div>
+          <span class="chip">Live UI filters</span>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-block">
+            <label class="control-label">Workspace mode</label>
+            <igx-select
+              type="box"
+              placeholder="Pick a mode"
+              [ngModel]="workspaceMode()"
+              (ngModelChange)="workspaceMode.set($event)"
+            >
+              <label igxLabel>Mode</label>
+              <igx-select-item *ngFor="let mode of workspaceModes" [value]="mode.id">
+                {{ mode.label }}
+              </igx-select-item>
+            </igx-select>
+          </div>
+
+          <div class="control-block">
+            <label class="control-label">Data channel</label>
+            <igx-simple-combo
+              placeholder="Pick a dataset"
+              searchPlaceholder="Search dataset"
+              [data]="channelOptions"
+              [displayKey]="'label'"
+              [valueKey]="'id'"
+              [ngModel]="channel()"
+              (ngModelChange)="channel.set($event)"
+            >
+            </igx-simple-combo>
+          </div>
+
+          <div class="control-block">
+            <label class="control-label">Category focus</label>
+            <igx-select
+              type="box"
+              placeholder="All categories"
+              [ngModel]="selectedCategory()"
+              (ngModelChange)="selectedCategory.set($event)"
+            >
+              <label igxLabel>Category</label>
+              <igx-select-item value="all">All categories</igx-select-item>
+              <igx-select-item *ngFor="let category of store.categories()" [value]="category">
+                {{ category }}
+              </igx-select-item>
+            </igx-select>
+          </div>
+
+          <div class="control-block control-block--wide">
+            <div class="slider-heading">
+              <label class="control-label">Minimum stock threshold</label>
+              <strong>{{ stockThreshold() }}</strong>
+            </div>
+
+            <igx-slider
+              [minValue]="0"
+              [maxValue]="100"
+              [step]="5"
+              [showTicks]="true"
+              [primaryTicks]="5"
+              [ngModel]="stockThreshold()"
+              (ngModelChange)="stockThreshold.set($event)"
+            >
+            </igx-slider>
+          </div>
+        </div>
+      </article>
+
+      <article class="card showcase-panel metrics-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-eyebrow">Ignite visuals</p>
+            <h2>Performance rings</h2>
+          </div>
+          <span class="chip">{{ activeModeLabel() }}</span>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <igx-circular-bar
+              [max]="maxStatValue()"
+              [value]="store.stats().products"
+              type="info"
+              [textVisibility]="true"
+            >
+            </igx-circular-bar>
+            <p>Products</p>
+          </div>
+
+          <div class="metric-card">
+            <igx-circular-bar
+              [max]="maxStatValue()"
+              [value]="store.stats().posts"
+              type="success"
+              [textVisibility]="true"
+            >
+            </igx-circular-bar>
+            <p>Posts</p>
+          </div>
+
+          <div class="metric-card">
+            <igx-circular-bar
+              [max]="maxStatValue()"
+              [value]="store.stats().todos"
+              type="warning"
+              [textVisibility]="true"
+            >
+            </igx-circular-bar>
+            <p>Todos</p>
+          </div>
+        </div>
+
+        <div class="linear-metrics">
+          <div class="linear-metric">
+            <div class="linear-metric__label">
+              <span>Catalog coverage</span>
+              <strong>{{ catalogCoverage() }}%</strong>
+            </div>
+            <igx-linear-bar [max]="100" [value]="catalogCoverage()" type="info"></igx-linear-bar>
+          </div>
+
+          <div class="linear-metric">
+            <div class="linear-metric__label">
+              <span>Stock readiness</span>
+              <strong>{{ stockReadiness() }}%</strong>
+            </div>
+            <igx-linear-bar [max]="100" [value]="stockReadiness()" type="success"></igx-linear-bar>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <article class="card showcase-panel grid-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="panel-eyebrow">Ignite data grid</p>
+          <h2>Featured products</h2>
+        </div>
+        <span class="chip">{{ filteredProducts().length }} rows</span>
+      </div>
+
+      <div *ngIf="store.isLoading()" class="dashboard-loading">Loading dashboard data...</div>
+
+      <igx-grid
+        *ngIf="!store.isLoading()"
+        class="dashboard-grid"
+        width="100%"
+        height="430px"
+        [data]="filteredProducts()"
+        [primaryKey]="'id'"
+        [allowFiltering]="true"
+        [filterMode]="'quickFilter'"
+        [moving]="true"
+        [rowSelection]="'multiple'"
+      >
+        <igx-column field="title" header="Product" [sortable]="true"></igx-column>
+        <igx-column field="category" header="Category" [sortable]="true"></igx-column>
+        <igx-column field="brand" header="Brand" [sortable]="true"></igx-column>
+        <igx-column field="price" header="Price" [sortable]="true"></igx-column>
+        <igx-column field="rating" header="Rating" [sortable]="true"></igx-column>
+        <igx-column field="stock" header="Stock" [sortable]="true"></igx-column>
+      </igx-grid>
+    </article>
+
+    <div class="quick-links">
+      <a routerLink="/products" class="quick-link card">
+        <igx-icon>inventory_2</igx-icon>
+        <div>
+          <h2>Browse products</h2>
+          <p>Catalog items, ratings, prices, stock, and product details.</p>
+        </div>
+      </a>
+
+      <a routerLink="/posts" class="quick-link card">
+        <igx-icon>article</igx-icon>
+        <div>
+          <h2>Read posts</h2>
+          <p>Articles, tags, engagement numbers, and reader comments.</p>
+        </div>
+      </a>
+
+      <a routerLink="/todos" class="quick-link card">
+        <igx-icon>check_circle</igx-icon>
+        <div>
+          <h2>Manage todos</h2>
+          <p>Personal tasks tied to the signed-in DummyJSON user.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>

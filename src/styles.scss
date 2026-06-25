@@ -1,8 +1,54 @@
 @use 'igniteui-angular/theming' as *;
 
 @include core();
-@include typography();
-@include theme($default-palette);
+@include typography($exclude: ('charts'));
+@include theme(
+  $default-palette,
+  $exclude: (
+    'igx-action-strip',
+    'igx-banner',
+    'igx-bottom-nav',
+    'igx-button-group',
+    'igx-calendar',
+    'igx-carousel',
+    'data-chart',
+    'doughnut-chart',
+    'linear-gauge',
+    'radial-gauge',
+    'financial-chart',
+    'bullet-graph',
+    'category-chart',
+    'geo-map',
+    'pie-chart',
+    'sparkline',
+    'funnel-chart',
+    'shape-chart',
+    'igx-date-picker',
+    'igx-date-range-picker',
+    'igx-dialog',
+    'igx-divider',
+    'igc-dockmanager',
+    'igx-expansion-panel',
+    'igx-highlight',
+    'igx-file-input',
+    'igx-navbar',
+    'igx-nav-drawer',
+    'igx-pivot-data-selector',
+    'igx-radio',
+    'igx-query-builder',
+    'igx-snackbar',
+    'igx-switch',
+    'igx-tabs',
+    'igx-stepper',
+    'igx-toast',
+    'igx-tooltip',
+    'igx-time-picker',
+    'igx-tree',
+    'igc-rating',
+    'igx-splitter',
+    'igc-trial-watermark'
+  )
+);
 
 :root {
   color-scheme: light;
@@ -65,6 +111,27 @@ select {
 img {
   display: block;
   max-width: 100%;
+}
+
+igx-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1em;
+  line-height: 1;
+  font-family:
+    'Material Symbols Rounded',
+    'Material Icons',
+    sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
 }
 
 app-root {

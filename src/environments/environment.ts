@@ -1,5 +1,8 @@
 export const environment = {
   production: false,
   apiUrl: 'https://dummyjson.com',
-  demoCredentials: null,
+  demoCredentials: {
+    username: 'emilys',
+    password: 'emilyspass',
+  },
 };

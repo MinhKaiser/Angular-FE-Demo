@@ -3,6 +3,8 @@ import { HttpErrorResponse, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from
 import { BehaviorSubject, catchError, filter, switchMap, take, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
+const TOKEN_ATTACHED_PATHS = ['/auth/me'] as const;
+const TOKEN_REFRESHABLE_PATHS = ['/auth/me'] as const;
 const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 let isRefreshingToken = false;
 
@@ -68,13 +70,22 @@ function handleUnauthorized(
 }
 
 function shouldAttachToken(request: HttpRequest<unknown>): boolean {
-  return !isAuthEndpoint(request.url, ['/auth/login', '/auth/refresh']);
+  return matchesProtectedPath(request.url, TOKEN_ATTACHED_PATHS);
 }
 
 function shouldRefreshSession(request: HttpRequest<unknown>): boolean {
-  return !isAuthEndpoint(request.url, ['/auth/login', '/auth/refresh']);
+  return matchesProtectedPath(request.url, TOKEN_REFRESHABLE_PATHS);
 }
 
-function isAuthEndpoint(url: string, endpoints: string[]): boolean {
-  return endpoints.some(endpoint => url.includes(endpoint));
+function matchesProtectedPath(url: string, paths: readonly string[]): boolean {
+  const normalizedPath = extractPathname(url);
+  return paths.some(path => normalizedPath === path || normalizedPath.endsWith(path));
+}
+
+function extractPathname(url: string): string {
+  try {
+    return new URL(url, 'http://localhost').pathname.toLowerCase();
+  } catch {
+    return url.toLowerCase();
+  }
 }

@@ -1,47 +1,88 @@
 import { CommonModule } from '@angular/common';
-import { Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, input } from '@angular/core';
+import { Router } from '@angular/router';
 import { Product } from '@shared/models';
 import { CurrencyFormatPipe } from '@shared/pipes';
+import { IgxBadgeModule } from 'igniteui-angular/badge';
+import { IgxCardModule } from 'igniteui-angular/card';
+import { IgxChipsModule } from 'igniteui-angular/chips';
+import { IgxButtonDirective } from 'igniteui-angular/directives';
+import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-product-card',
   standalone: true,
-  imports: [CommonModule, RouterLink, CurrencyFormatPipe],
+  imports: [
+    CommonModule,
+    CurrencyFormatPipe,
+    IgxBadgeModule,
+    IgxCardModule,
+    IgxChipsModule,
+    IgxButtonDirective,
+    IgxIconModule,
+  ],
   template: `
-    <article class="product-card card">
-      <a [routerLink]="['/products', product().id]" class="product-card__image">
-        <img
-          [src]="product().thumbnail"
-          [alt]="product().title"
-          loading="lazy"
-        />
-      </a>
+    <igx-card
+      elevated="true"
+      class="product-card"
+      tabindex="0"
+      role="link"
+      (click)="openDetails()"
+      (keydown.enter)="openDetails()"
+      (keydown.space)="openDetails($event)"
+    >
+      <igx-card-media class="product-card__media">
+        <button type="button" class="product-card__image-link" (click)="openDetails($event)">
+          <img
+            [src]="product().thumbnail"
+            [alt]="product().title"
+            loading="lazy"
+          />
+        </button>
+      </igx-card-media>
 
-      <div class="product-card__body">
-        <p class="product-card__category">{{ product().category }}</p>
-        <h2>{{ product().title }}</h2>
+      <igx-card-header>
+        <div igxCardHeaderTitle>{{ product().title }}</div>
+        <div igxCardHeaderSubtitle>{{ product().category }}</div>
+      </igx-card-header>
+
+      <igx-card-content>
         <p class="product-card__description">{{ product().description }}</p>
 
         <div class="product-card__meta">
           <span class="product-card__price">{{ product().price | appCurrency }}</span>
-          <span class="product-card__rating">
-            Rating {{ product().rating }}
-          </span>
+          <igx-badge type="warning" [value]="product().rating.toFixed(1)"></igx-badge>
         </div>
 
-        <a
-          [routerLink]="['/products', product().id]"
-          class="action-link product-card__link"
+        <div class="product-card__chips">
+          <igx-chip variant="info">
+            <igx-icon igxPrefix>inventory_2</igx-icon>
+            {{ product().stock }} in stock
+          </igx-chip>
+          <igx-chip *ngIf="product().brand" variant="success">
+            <igx-icon igxPrefix>branding_watermark</igx-icon>
+            {{ product().brand }}
+          </igx-chip>
+        </div>
+      </igx-card-content>
+
+      <igx-card-actions>
+        <button
+          type="button"
+          igxButton="contained"
+          class="product-card__link"
+          (click)="openDetails($event)"
         >
+          <igx-icon>arrow_forward</igx-icon>
           View details
-        </a>
-      </div>
-    </article>
+        </button>
+      </igx-card-actions>
+    </igx-card>
   `,
   styles: [`
     .product-card {
-      overflow: hidden;
+      height: 100%;
+      cursor: pointer;
       transition:
         transform 0.16s ease,
         box-shadow 0.16s ease;
@@ -52,41 +93,28 @@ import { CurrencyFormatPipe } from '@shared/pipes';
       box-shadow: 0 10px 24px rgb(15 23 42 / 10%);
     }
 
-    .product-card__image {
+    .product-card__media,
+    .product-card__image-link {
       display: block;
-      background: var(--app-surface-muted);
     }
 
-    .product-card__image img {
+    .product-card__image-link {
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .product-card__media img {
       width: 100%;
       aspect-ratio: 1;
       object-fit: cover;
     }
 
-    .product-card__body {
-      padding: 1rem;
-    }
-
-    .product-card__category {
-      margin: 0;
-      color: var(--app-primary);
-      font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 0;
-      text-transform: uppercase;
-    }
-
-    .product-card h2 {
-      overflow: hidden;
-      margin: 0.25rem 0 0;
-      font-size: 1rem;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
     .product-card__description {
       min-height: 2.5rem;
-      margin: 0.5rem 0 0;
+      margin: 0;
       color: var(--app-text-muted);
       font-size: 0.9rem;
       line-height: 1.45;
@@ -105,21 +133,28 @@ import { CurrencyFormatPipe } from '@shared/pipes';
       font-weight: 800;
     }
 
-    .product-card__rating {
-      border-radius: 999px;
-      padding: 0.25rem 0.5rem;
-      color: var(--app-warning);
-      background: #fff7e8;
-      font-size: 0.78rem;
-      font-weight: 800;
+    .product-card__chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
     }
 
     .product-card__link {
-      width: 100%;
-      margin-top: 1rem;
+      display: inline-flex;
+      gap: 0.45rem;
+      align-items: center;
     }
   `],
 })
 export class ProductCardComponent {
+  private readonly router = inject(Router);
+
   readonly product = input.required<Product>();
+
+  openDetails(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.router.navigate(['/products', this.product().id]);
+  }
 }

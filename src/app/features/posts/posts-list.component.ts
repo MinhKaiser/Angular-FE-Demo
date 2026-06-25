@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import {
+  EmptyStateComponent,
+  LoadingStateComponent,
+  PageSectionHeaderComponent,
+  StatusBannerComponent,
+} from '@shared/components';
 import { Post } from '@shared/models';
 import { PostCardComponent } from './components/post-card.component';
 import { PostFilterComponent } from './components/post-filter.component';
@@ -8,34 +14,50 @@ import { PostsStore, type PostsStoreInstance } from './state/posts.store';
 @Component({
   selector: 'app-posts-list',
   standalone: true,
-  imports: [CommonModule, PostCardComponent, PostFilterComponent],
+  imports: [
+    CommonModule,
+    PostCardComponent,
+    PostFilterComponent,
+    StatusBannerComponent,
+    LoadingStateComponent,
+    EmptyStateComponent,
+    PageSectionHeaderComponent,
+  ],
   providers: [PostsStore],
   template: `
     <section class="app-page posts-page">
       <div class="app-shell app-shell--narrow">
-        <div class="content-header">
-          <div class="page-heading">
-            <p class="page-heading__eyebrow">DummyJSON posts</p>
-            <h1>Posts</h1>
-            <p class="page-heading__meta">{{ store.total() }} posts available</p>
-          </div>
-
+        <app-page-section-header
+          eyebrow="DummyJSON posts"
+          title="Posts"
+          [meta]="store.total() + ' posts available with tag filtering and reading cards.'"
+          icon="article"
+          [chipLabel]="store.total() + ' posts'"
+          chipVariant="success"
+        >
           <app-post-filter
+            page-actions
             [tags]="store.tags()"
             [selectedTag]="store.filters().tag"
+            [searchTerm]="store.filters().searchTerm"
             [isLoading]="store.isLoading()"
             (search)="store.search($event)"
             (tagChange)="store.filterByTag($event)"
           />
-        </div>
+        </app-page-section-header>
 
-        <div *ngIf="store.errorMessage()" class="alert">
-          {{ store.errorMessage() }}
-        </div>
+        <app-status-banner
+          *ngIf="store.errorMessage()"
+          tone="error"
+          icon="error_outline"
+          [message]="store.errorMessage()"
+        />
 
-        <div *ngIf="store.isLoading()" class="spinner-wrap">
-          <div class="spinner"></div>
-        </div>
+        <app-loading-state
+          *ngIf="store.isLoading()"
+          title="Loading posts"
+          message="Fresh articles and tags are being prepared for the reading feed."
+        />
 
         <div *ngIf="!store.isLoading() && store.posts().length > 0" class="post-list">
           <app-post-card
@@ -44,10 +66,12 @@ import { PostsStore, type PostsStoreInstance } from './state/posts.store';
           />
         </div>
 
-        <div *ngIf="!store.isLoading() && store.posts().length === 0" class="empty-state">
-          <p><strong>No posts found</strong></p>
-          <p class="muted">Try another keyword or tag.</p>
-        </div>
+        <app-empty-state
+          *ngIf="!store.isLoading() && store.posts().length === 0"
+          title="No posts found"
+          description="Try another keyword or tag to bring more stories into the feed."
+          icon="article"
+        />
       </div>
     </section>
   `,
@@ -63,12 +87,8 @@ import { PostsStore, type PostsStoreInstance } from './state/posts.store';
     }
   `],
 })
-export class PostsListComponent implements OnInit {
+export class PostsListComponent {
   protected readonly store: PostsStoreInstance = inject(PostsStore);
-
-  ngOnInit(): void {
-    this.store.loadInitialData();
-  }
 
   trackByPostId(_index: number, post: Post): number {
     return post.id;

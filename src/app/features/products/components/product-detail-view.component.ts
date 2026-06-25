@@ -2,17 +2,30 @@ import { CommonModule } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { Product } from '@shared/models';
 import { CurrencyFormatPipe } from '@shared/pipes';
+import { IgxAvatarModule } from 'igniteui-angular/avatar';
+import { IgxCardModule } from 'igniteui-angular/card';
+import { IgxChipsModule } from 'igniteui-angular/chips';
+import { IgxIconModule } from 'igniteui-angular/icon';
+import { IgxProgressBarModule } from 'igniteui-angular/progressbar';
 
 @Component({
   selector: 'app-product-detail-view',
   standalone: true,
-  imports: [CommonModule, CurrencyFormatPipe],
+  imports: [
+    CommonModule,
+    CurrencyFormatPipe,
+    IgxAvatarModule,
+    IgxCardModule,
+    IgxChipsModule,
+    IgxIconModule,
+    IgxProgressBarModule,
+  ],
   template: `
     <ng-container *ngIf="product() as item">
       <div class="product-detail">
-        <div class="product-detail__media card">
+        <igx-card elevated="true" class="product-detail__media">
           <img [src]="item.images[0] || item.thumbnail" [alt]="item.title" />
-        </div>
+        </igx-card>
 
         <div class="product-detail__summary">
           <p class="product-detail__category">{{ item.category }}</p>
@@ -21,31 +34,41 @@ import { CurrencyFormatPipe } from '@shared/pipes';
 
           <div class="product-detail__meta">
             <span class="product-detail__price">{{ item.price | appCurrency }}</span>
-            <span class="chip product-detail__rating">
+            <igx-chip class="product-detail__rating" variant="warning">
+              <igx-icon igxPrefix>star</igx-icon>
               Rating {{ item.rating }}
-            </span>
-            <span class="chip">
+            </igx-chip>
+            <igx-chip variant="info">
+              <igx-icon igxPrefix>inventory_2</igx-icon>
               Stock {{ item.stock }}
-            </span>
+            </igx-chip>
+          </div>
+
+          <div class="product-detail__stock-bar">
+            <div class="product-detail__stock-header">
+              <span>Stock health</span>
+              <strong>{{ item.stock }} / 150</strong>
+            </div>
+            <igx-linear-bar [max]="150" [value]="item.stock" type="info"></igx-linear-bar>
           </div>
 
           <dl class="product-detail__facts">
-            <div class="card fact">
+            <igx-card elevated="true" class="fact">
               <dt>Availability</dt>
               <dd>{{ item.availabilityStatus }}</dd>
-            </div>
-            <div class="card fact">
+            </igx-card>
+            <igx-card elevated="true" class="fact">
               <dt>Shipping</dt>
               <dd>{{ item.shippingInformation }}</dd>
-            </div>
-            <div class="card fact">
+            </igx-card>
+            <igx-card elevated="true" class="fact">
               <dt>Warranty</dt>
               <dd>{{ item.warrantyInformation }}</dd>
-            </div>
-            <div class="card fact">
+            </igx-card>
+            <igx-card elevated="true" class="fact">
               <dt>Return policy</dt>
               <dd>{{ item.returnPolicy }}</dd>
-            </div>
+            </igx-card>
           </dl>
         </div>
       </div>
@@ -53,11 +76,21 @@ import { CurrencyFormatPipe } from '@shared/pipes';
       <section class="reviews">
         <h2>Reviews</h2>
         <div class="reviews__grid">
-          <article *ngFor="let review of item.reviews" class="card review-card">
-            <p class="review-card__name">{{ review.reviewerName }}</p>
-            <p class="muted">Rating {{ review.rating }}</p>
+          <igx-card *ngFor="let review of item.reviews" elevated="true" class="review-card">
+            <div class="review-card__header">
+              <igx-avatar
+                [initials]="review.reviewerName.slice(0, 2).toUpperCase()"
+                shape="circle"
+                size="small"
+              >
+              </igx-avatar>
+              <div>
+                <p class="review-card__name">{{ review.reviewerName }}</p>
+                <p class="muted">Rating {{ review.rating }}</p>
+              </div>
+            </div>
             <p>{{ review.comment }}</p>
-          </article>
+          </igx-card>
         </div>
       </section>
     </ng-container>
@@ -112,9 +145,16 @@ import { CurrencyFormatPipe } from '@shared/pipes';
       font-weight: 800;
     }
 
-    .product-detail__rating {
-      color: var(--app-warning);
-      background: #fff7e8;
+    .product-detail__stock-bar {
+      margin-top: 1.5rem;
+    }
+
+    .product-detail__stock-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
     }
 
     .product-detail__facts {
@@ -160,12 +200,20 @@ import { CurrencyFormatPipe } from '@shared/pipes';
       padding: 1.25rem;
     }
 
+    .review-card__header {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 0.85rem;
+    }
+
     .review-card__name {
       margin: 0;
       font-weight: 800;
     }
 
     .review-card p:last-child {
+      margin: 0;
       color: var(--app-text-muted);
       font-size: 0.9rem;
       line-height: 1.6;

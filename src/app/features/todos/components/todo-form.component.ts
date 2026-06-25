@@ -1,25 +1,32 @@
 import { Component, input, output } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { IgxButtonDirective } from 'igniteui-angular/directives';
+import { IgxIconModule } from 'igniteui-angular/icon';
+import { IgxInputGroupModule } from 'igniteui-angular/input-group';
 
 @Component({
   selector: 'app-todo-form',
   standalone: true,
-  imports: [ReactiveFormsModule, IgxButtonDirective],
+  imports: [ReactiveFormsModule, IgxButtonDirective, IgxIconModule, IgxInputGroupModule],
   template: `
     <form (ngSubmit)="submitTodo()" class="todo-form card">
-      <input
-        type="text"
-        [formControl]="todoControl"
-        class="field"
-        placeholder="Add a new todo"
-      />
+      <igx-input-group type="box" class="todo-form__input">
+        <igx-icon igxPrefix>playlist_add_check_circle</igx-icon>
+        <label igxLabel>Add a new todo</label>
+        <input
+          igxInput
+          type="text"
+          [formControl]="todoControl"
+          autocomplete="off"
+        />
+      </igx-input-group>
       <button
         igxButton="contained"
         type="submit"
-        class="primary-button"
+        class="primary-button todo-form__button"
         [disabled]="todoControl.invalid || isSaving()"
       >
+        <igx-icon>add_task</igx-icon>
         Add todo
       </button>
     </form>
@@ -31,6 +38,12 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
       gap: 0.75rem;
       margin-bottom: 1.5rem;
       padding: 1rem;
+    }
+
+    .todo-form__button {
+      display: inline-flex;
+      gap: 0.5rem;
+      align-items: center;
     }
 
     @media (max-width: 560px) {

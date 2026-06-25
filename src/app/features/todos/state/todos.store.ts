@@ -1,5 +1,5 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { catchError, finalize, of } from 'rxjs';
 import { AuthService, TodoService } from '@core/services';
 import { Todo, TodosResponse } from '@shared/models';
@@ -122,6 +122,11 @@ export const TodosStore = signalStore(
         return store.updatingTodoIds().has(todoId);
       },
     };
+  }),
+  withHooks({
+    onInit(store) {
+      store.loadTodos();
+    },
   })
 );
 

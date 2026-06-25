@@ -1,42 +1,59 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, output } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnChanges, SimpleChanges, input, output } from '@angular/core';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProductCategoryOption } from '../state/products.store';
 import { IgxButtonDirective } from 'igniteui-angular/directives';
+import { IgxIconModule } from 'igniteui-angular/icon';
+import { IgxInputGroupModule } from 'igniteui-angular/input-group';
+import { IgxSelectModule } from 'igniteui-angular/select';
 
 @Component({
   selector: 'app-product-filter',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, IgxButtonDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    IgxButtonDirective,
+    IgxIconModule,
+    IgxInputGroupModule,
+    IgxSelectModule,
+  ],
   template: `
     <div class="filter-bar">
-      <input
-        type="search"
-        [formControl]="searchControl"
-        (keyup.enter)="submitSearch()"
-        class="field"
-        placeholder="Search by title"
-      />
+      <igx-input-group type="box" class="filter-field">
+        <igx-icon igxPrefix>search</igx-icon>
+        <label igxLabel>Search by title</label>
+        <input
+          igxInput
+          type="search"
+          [formControl]="searchControl"
+          (keyup.enter)="submitSearch()"
+          autocomplete="off"
+        />
+      </igx-input-group>
 
-      <select
-        #categorySelect
-        [value]="selectedCategory()"
-        (change)="categoryChange.emit(categorySelect.value)"
-        class="field"
+      <igx-select
+        type="box"
+        class="filter-field"
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="categoryChange.emit($event ?? '')"
       >
-        <option value="">All categories</option>
-        <option *ngFor="let category of categories()" [value]="category.slug">
+        <label igxLabel>Category</label>
+        <igx-select-item value="">All categories</igx-select-item>
+        <igx-select-item *ngFor="let category of categories()" [value]="category.slug">
           {{ category.name }}
-        </option>
-      </select>
+        </igx-select-item>
+      </igx-select>
 
       <button
         igxButton="contained"
         type="button"
         (click)="submitSearch()"
-        class="primary-button"
+        class="primary-button filter-action"
         [disabled]="isLoading()"
       >
+        <igx-icon>travel_explore</igx-icon>
         Search
       </button>
     </div>
@@ -44,8 +61,31 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
   styles: [`
     .filter-bar {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) 180px auto;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.8fr) auto;
       gap: 0.75rem;
+      align-items: end;
+    }
+
+    .filter-field {
+      min-width: 0;
+    }
+
+    .filter-action {
+      display: inline-flex;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 1040px) {
+      .filter-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-action {
+        width: 100%;
+      }
     }
 
     @media (max-width: 760px) {
@@ -55,14 +95,24 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
     }
   `],
 })
-export class ProductFilterComponent {
+export class ProductFilterComponent implements OnChanges {
   readonly categories = input.required<readonly ProductCategoryOption[]>();
   readonly selectedCategory = input('');
+  readonly searchTerm = input('');
   readonly isLoading = input(false);
   readonly search = output<string>();
   readonly categoryChange = output<string>();
 
   readonly searchControl = new FormControl('', { nonNullable: true });
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('searchTerm' in changes) {
+      const nextValue = this.searchTerm() ?? '';
+      if (this.searchControl.value !== nextValue) {
+        this.searchControl.setValue(nextValue, { emitEvent: false });
+      }
+    }
+  }
 
   submitSearch(): void {
     this.search.emit(this.searchControl.value);

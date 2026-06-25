@@ -1,24 +1,32 @@
 import { Component, input } from '@angular/core';
+import { IgxBadgeModule } from 'igniteui-angular/badge';
+import { IgxCardModule } from 'igniteui-angular/card';
+import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-dashboard-stat-card',
   standalone: true,
+  imports: [IgxCardModule, IgxBadgeModule, IgxIconModule],
   template: `
-    <article class="stat-card card">
-      <div class="stat-card__inner">
+    <igx-card class="stat-card">
+      <igx-card-content class="stat-card__inner">
         <div>
           <p class="stat-card__label">{{ label() }}</p>
           <p class="stat-card__value">{{ value() }}</p>
         </div>
-        <div class="stat-card__badge" [class]="toneClass()">
-          {{ code() }}
+        <div class="stat-card__badge-shell" [class]="toneClass()">
+          <igx-icon>{{ icon() }}</igx-icon>
+          <span igxBadge>{{ code() }}</span>
         </div>
-      </div>
-    </article>
+      </igx-card-content>
+    </igx-card>
   `,
   styles: [`
     .stat-card {
-      padding: 1.5rem;
+      border-radius: 20px;
+      box-shadow: none;
+      border: 1px solid #dbe7f2;
+      background: rgb(255 255 255 / 94%);
     }
 
     .stat-card__inner {
@@ -26,6 +34,7 @@ import { Component, input } from '@angular/core';
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
+      padding: 1.35rem 1.5rem;
     }
 
     .stat-card__label,
@@ -45,14 +54,17 @@ import { Component, input } from '@angular/core';
       font-weight: 800;
     }
 
-    .stat-card__badge {
+    .stat-card__badge-shell {
+      position: relative;
       display: grid;
-      width: 2.75rem;
-      height: 2.75rem;
+      width: 3.1rem;
+      height: 3.1rem;
       place-items: center;
-      border-radius: var(--app-radius);
-      font-size: 0.88rem;
-      font-weight: 800;
+      border-radius: 18px;
+    }
+
+    .stat-card__badge-shell igx-icon {
+      font-size: 1.35rem;
     }
 
     .tone-blue {
@@ -81,6 +93,7 @@ export class DashboardStatCardComponent {
   readonly value = input.required<number>();
   readonly code = input.required<string>();
   readonly tone = input<'blue' | 'emerald' | 'violet' | 'amber'>('blue');
+  readonly icon = input<string>('insights');
 
   toneClass(): string {
     return `tone-${this.tone()}`;

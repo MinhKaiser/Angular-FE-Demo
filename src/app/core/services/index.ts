@@ -6,3 +6,5 @@ export * from './post.service';
 export * from './comment.service';
 export * from './todo.service';
 export * from './environment.service';
+export * from './runtime-error-handler.service';
+export * from './dev-diagnostics.service';

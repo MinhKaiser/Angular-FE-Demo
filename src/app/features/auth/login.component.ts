@@ -1,17 +1,28 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, getEnvironmentConfig } from '@core/services';
 import { IgxButtonDirective } from 'igniteui-angular/directives';
+import { IgxCardModule } from 'igniteui-angular/card';
+import { IgxIconModule } from 'igniteui-angular/icon';
+import { IgxInputGroupModule } from 'igniteui-angular/input-group';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, IgxButtonDirective],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    IgxButtonDirective,
+    IgxCardModule,
+    IgxIconModule,
+    IgxInputGroupModule,
+  ],
   template: `
     <section class="login-page">
-      <div class="login-card card">
+      <igx-card elevated="true" class="login-card">
         <div class="login-card__header">
           <div class="login-card__mark">DJ</div>
           <h1>Sign in</h1>
@@ -24,26 +35,32 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
           <div class="login-form__field">
-            <label for="username">Username</label>
-            <input
-              id="username"
-              type="text"
-              formControlName="username"
-              class="field"
-              autocomplete="username"
-            />
+            <igx-input-group type="box">
+              <igx-icon igxPrefix>person</igx-icon>
+              <label igxLabel for="username">Username</label>
+              <input
+                id="username"
+                igxInput
+                type="text"
+                formControlName="username"
+                autocomplete="username"
+              />
+            </igx-input-group>
             <p *ngIf="isFieldInvalid('username')" class="login-form__error">Username is required.</p>
           </div>
 
           <div class="login-form__field">
-            <label for="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              formControlName="password"
-              class="field"
-              autocomplete="current-password"
-            />
+            <igx-input-group type="box">
+              <igx-icon igxPrefix>lock</igx-icon>
+              <label igxLabel for="password">Password</label>
+              <input
+                id="password"
+                igxInput
+                type="password"
+                formControlName="password"
+                autocomplete="current-password"
+              />
+            </igx-input-group>
             <p *ngIf="isFieldInvalid('password')" class="login-form__error">Password is required.</p>
           </div>
 
@@ -53,6 +70,7 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
             [disabled]="isLoading() || loginForm.invalid"
             class="primary-button login-form__submit"
           >
+            <igx-icon>{{ isLoading() ? 'hourglass_top' : 'login' }}</igx-icon>
             {{ isLoading() ? 'Signing in...' : 'Sign in' }}
           </button>
         </form>
@@ -64,6 +82,7 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
           (click)="useDemoCredentials()"
           class="outline-button login-card__demo-button"
         >
+          <igx-icon>bolt</igx-icon>
           Use demo credentials
         </button>
 
@@ -71,7 +90,7 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
           <p><span>Username:</span> {{ demoCredentials.username }}</p>
           <p><span>Password:</span> {{ demoCredentials.password }}</p>
         </div>
-      </div>
+      </igx-card>
     </section>
   `,
   styles: [`
@@ -126,14 +145,6 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
       gap: 1rem;
     }
 
-    .login-form__field label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: #334155;
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-
     .login-form__error {
       margin: 0.35rem 0 0;
       color: var(--app-danger);
@@ -147,6 +158,14 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
 
     .login-card__demo-button {
       margin-top: 1rem;
+    }
+
+    .login-form__submit,
+    .login-card__demo-button {
+      display: inline-flex;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
     }
 
     .demo-credentials {
@@ -165,26 +184,24 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
     }
   `],
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent {
   private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly config = getEnvironmentConfig();
+  private readonly queryParamMap = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
 
   readonly isLoading = this.authService.isLoading;
   readonly error = this.authService.error;
   readonly demoCredentials = this.config.demoCredentials;
+  readonly returnUrl = computed(() => this.queryParamMap().get('returnUrl') || '/dashboard');
   readonly loginForm = this.fb.group({
     username: ['', Validators.required],
     password: ['', Validators.required],
   });
-
-  private returnUrl = '/dashboard';
-
-  ngOnInit(): void {
-    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
-  }
 
   onSubmit(): void {
     if (this.loginForm.invalid) {
@@ -196,7 +213,7 @@ export class LoginComponent implements OnInit {
       ...this.loginForm.getRawValue(),
       expiresInMins: 30,
     }).subscribe({
-      next: () => this.router.navigateByUrl(this.returnUrl),
+      next: () => this.router.navigateByUrl(this.returnUrl()),
     });
   }
 

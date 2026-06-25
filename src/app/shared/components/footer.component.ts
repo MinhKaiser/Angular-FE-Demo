@@ -1,18 +1,23 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { IgxChipsModule } from 'igniteui-angular/chips';
+import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, IgxChipsModule, IgxIconModule],
   template: `
     <footer class="site-footer">
       <div class="site-footer__inner">
-        <p>Dummy Shop training app</p>
+        <div class="site-footer__brand">
+          <igx-icon>widgets</igx-icon>
+          <p>Dummy Shop training app</p>
+        </div>
         <div class="site-footer__links">
-          <a routerLink="/products">Products</a>
-          <a routerLink="/posts">Posts</a>
-          <a routerLink="/todos">Todos</a>
+          <a routerLink="/products"><igx-chip variant="info">Products</igx-chip></a>
+          <a routerLink="/posts"><igx-chip variant="success">Posts</igx-chip></a>
+          <a routerLink="/todos"><igx-chip variant="primary">Todos</igx-chip></a>
         </div>
       </div>
     </footer>
@@ -35,17 +40,26 @@ import { RouterLink } from '@angular/router';
       font-size: 0.9rem;
     }
 
+    .site-footer__brand,
+    .site-footer__links {
+      display: flex;
+      align-items: center;
+    }
+
+    .site-footer__brand {
+      gap: 0.6rem;
+    }
+
     .site-footer__inner p {
       margin: 0;
     }
 
     .site-footer__links {
-      display: flex;
       gap: 1rem;
     }
 
-    .site-footer__links a:hover {
-      color: var(--app-text);
+    .site-footer__links a {
+      text-decoration: none;
     }
 
     @media (max-width: 600px) {

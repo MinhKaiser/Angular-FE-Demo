@@ -1,7 +1,8 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { AuthService, PostService, ProductService, TodoService } from '@core/services';
+import type { Product } from '@shared/models';
 
 export interface DashboardStats {
   products: number;
@@ -11,6 +12,8 @@ export interface DashboardStats {
 
 interface DashboardState {
   stats: DashboardStats;
+  featuredProducts: Product[];
+  categories: string[];
   isLoading: boolean;
   errorMessage: string;
 }
@@ -21,18 +24,20 @@ const initialState: DashboardState = {
     posts: 0,
     todos: 0,
   },
+  featuredProducts: [],
+  categories: [],
   isLoading: false,
   errorMessage: '',
 };
 
 export const DashboardStore = signalStore(
   withState(initialState),
-  withComputed((_store, authService = inject(AuthService)) => ({
+  withComputed((_store: unknown, authService = inject(AuthService)) => ({
     displayName: authService.displayName,
     userId: computed(() => authService.user()?.id ?? 0),
   })),
   withMethods((
-    store,
+    store: any,
     authService = inject(AuthService),
     productService = inject(ProductService),
     postService = inject(PostService),
@@ -45,9 +50,10 @@ export const DashboardStore = signalStore(
       patchState(store, { isLoading: true, errorMessage: '' });
 
       forkJoin({
-        products: productService.getProducts({ limit: 1, skip: 0 }),
+        products: productService.getProducts({ limit: 6, skip: 0 }),
         posts: postService.getPosts({ limit: 1, skip: 0 }),
         todos: todoService.getTodosByUser(user.id, { limit: 1, skip: 0 }),
+        categories: productService.getCategoryList(),
       }).pipe(
         catchError(() => {
           patchState(store, { errorMessage: 'Could not load dashboard statistics.' });
@@ -63,10 +69,17 @@ export const DashboardStore = signalStore(
             posts: result.posts.total,
             todos: result.todos.total,
           },
+          featuredProducts: result.products.products,
+          categories: result.categories,
         });
       });
     },
-  }))
+  })),
+  withHooks({
+    onInit(store) {
+      store.loadStatistics();
+    },
+  })
 );
 
 export type DashboardStoreInstance = InstanceType<typeof DashboardStore>;

@@ -2,12 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@core/services';
+import { IgxChipsModule } from 'igniteui-angular/chips';
 import { IgxButtonDirective } from 'igniteui-angular/directives';
+import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, IgxButtonDirective],
+  imports: [CommonModule, RouterLink, RouterLinkActive, IgxChipsModule, IgxButtonDirective, IgxIconModule],
   template: `
     <header class="site-header">
       <nav class="site-header__nav">
@@ -18,31 +20,39 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
 
         <div class="site-header__links">
           <a routerLink="/products" routerLinkActive="is-active" class="site-header__link">
+            <igx-icon>inventory_2</igx-icon>
             Products
           </a>
           <a routerLink="/posts" routerLinkActive="is-active" class="site-header__link">
+            <igx-icon>article</igx-icon>
             Posts
           </a>
           <a routerLink="/todos" routerLinkActive="is-active" class="site-header__link">
+            <igx-icon>check_circle</igx-icon>
             Todos
           </a>
         </div>
 
         <div class="site-header__actions">
           <ng-container *ngIf="isAuthenticated(); else signInLink">
-            <span class="site-header__user">{{ displayName() }}</span>
+            <igx-chip variant="primary" class="site-header__user">
+              <igx-icon igxPrefix>person</igx-icon>
+              {{ displayName() }}
+            </igx-chip>
             <button
               igxButton="outlined"
               type="button"
               (click)="onLogout()"
               class="outline-button"
             >
+              <igx-icon>logout</igx-icon>
               Logout
             </button>
           </ng-container>
 
           <ng-template #signInLink>
-            <a routerLink="/auth/login" class="primary-button">
+            <a routerLink="/auth/login" igxButton="contained" class="primary-button site-header__sign-in">
+              <igx-icon>login</igx-icon>
               Sign in
             </a>
           </ng-template>
@@ -63,11 +73,11 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
     .site-header__nav {
       display: flex;
       width: min(100% - 2rem, 1120px);
-      height: 4rem;
       align-items: center;
       justify-content: space-between;
       gap: 1.5rem;
       margin-inline: auto;
+      padding-block: 0.85rem;
     }
 
     .brand,
@@ -101,9 +111,14 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
 
     .site-header__links {
       gap: 1.5rem;
+      min-width: 0;
+      flex-wrap: wrap;
     }
 
     .site-header__link {
+      display: inline-flex;
+      gap: 0.4rem;
+      align-items: center;
       color: var(--app-text-muted);
       font-size: 0.9rem;
       font-weight: 700;
@@ -116,19 +131,47 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
 
     .site-header__actions {
       gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .site-header__user {
       max-width: 10rem;
       overflow: hidden;
-      color: var(--app-text-muted);
-      font-size: 0.9rem;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
+    .outline-button,
+    .site-header__sign-in {
+      display: inline-flex;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .site-header__nav {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
+      .site-header__actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
     @media (max-width: 760px) {
-      .site-header__links,
+      .site-header__nav {
+        gap: 1rem;
+      }
+
+      .site-header__links {
+        width: 100%;
+        gap: 0.85rem 1rem;
+        order: 3;
+      }
+
       .site-header__user {
         display: none;
       }

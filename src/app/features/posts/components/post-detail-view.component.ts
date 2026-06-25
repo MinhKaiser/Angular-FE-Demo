@@ -1,40 +1,52 @@
 import { CommonModule } from '@angular/common';
 import { Component, input } from '@angular/core';
 import { Comment, Post } from '@shared/models';
+import { IgxAvatarModule } from 'igniteui-angular/avatar';
+import { IgxCardModule } from 'igniteui-angular/card';
+import { IgxChipsModule } from 'igniteui-angular/chips';
+import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-post-detail-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, IgxAvatarModule, IgxCardModule, IgxChipsModule, IgxIconModule],
   template: `
-    <article *ngIf="post() as item" class="post-detail card">
+    <igx-card *ngIf="post() as item" elevated="true" class="post-detail">
       <div class="post-detail__tags">
-        <span *ngFor="let tag of item.tags" class="chip">
+        <igx-chip *ngFor="let tag of item.tags" variant="success">
           {{ tag }}
-        </span>
+        </igx-chip>
       </div>
 
       <h1>{{ item.title }}</h1>
       <p class="post-detail__body">{{ item.body }}</p>
 
       <div class="post-detail__metrics">
-        <span>{{ item.views }} views</span>
-        <span>{{ item.reactions.likes }} likes</span>
-        <span>{{ item.reactions.dislikes }} dislikes</span>
-        <span>User {{ item.userId }}</span>
+        <span><igx-icon>visibility</igx-icon>{{ item.views }} views</span>
+        <span><igx-icon>thumb_up</igx-icon>{{ item.reactions.likes }} likes</span>
+        <span><igx-icon>thumb_down</igx-icon>{{ item.reactions.dislikes }} dislikes</span>
+        <span><igx-icon>person</igx-icon>User {{ item.userId }}</span>
       </div>
-    </article>
+    </igx-card>
 
     <section class="comments">
       <h2>Comments</h2>
       <div class="comments__list">
-        <article *ngFor="let comment of comments(); trackBy: trackByCommentId" class="comment-card card">
+        <igx-card *ngFor="let comment of comments(); trackBy: trackByCommentId" elevated="true" class="comment-card">
           <div class="comment-card__header">
-            <p>{{ comment.user.fullName }}</p>
+            <div class="comment-card__author">
+              <igx-avatar
+                [initials]="comment.user.fullName.slice(0, 2).toUpperCase()"
+                shape="circle"
+                size="small"
+              >
+              </igx-avatar>
+              <p>{{ comment.user.fullName }}</p>
+            </div>
             <p class="muted">{{ comment.likes }} likes</p>
           </div>
           <p class="comment-card__body">{{ comment.body }}</p>
-        </article>
+        </igx-card>
 
         <div *ngIf="comments().length === 0" class="empty-state">
           No comments found.
@@ -75,6 +87,12 @@ import { Comment, Post } from '@shared/models';
       font-size: 0.9rem;
     }
 
+    .post-detail__metrics span {
+      display: inline-flex;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
     .comments {
       margin-top: 2rem;
     }
@@ -99,6 +117,12 @@ import { Comment, Post } from '@shared/models';
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
+    }
+
+    .comment-card__author {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
     }
 
     .comment-card__header p {

@@ -2,21 +2,22 @@ import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 import { Todo } from '@shared/models';
 import { IgxButtonDirective } from 'igniteui-angular/directives';
+import { IgxCheckboxModule } from 'igniteui-angular/checkbox';
+import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-todo-item',
   standalone: true,
-  imports: [CommonModule, IgxButtonDirective],
+  imports: [CommonModule, IgxButtonDirective, IgxCheckboxModule, IgxIconModule],
   template: `
     <article class="todo-item card">
-      <input
-        #completedInput
-        type="checkbox"
+      <igx-checkbox
         [checked]="todo().completed"
         [disabled]="isUpdating()"
-        (change)="toggle.emit(completedInput.checked)"
+        (click)="toggle.emit(!todo().completed)"
         class="todo-item__checkbox"
-      />
+      >
+      </igx-checkbox>
 
       <span
         class="todo-item__text"
@@ -32,6 +33,7 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
         [disabled]="isUpdating()"
         class="outline-button todo-item__delete"
       >
+        <igx-icon>delete</igx-icon>
         Delete
       </button>
     </article>
@@ -45,12 +47,6 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
       padding: 1rem;
     }
 
-    .todo-item__checkbox {
-      width: 1.25rem;
-      height: 1.25rem;
-      accent-color: var(--app-accent);
-    }
-
     .todo-item__text {
       color: var(--app-text);
       font-size: 0.94rem;
@@ -62,6 +58,9 @@ import { IgxButtonDirective } from 'igniteui-angular/directives';
     }
 
     .todo-item__delete {
+      display: inline-flex;
+      gap: 0.35rem;
+      align-items: center;
       min-height: 2rem;
       padding: 0.35rem 0.75rem;
       font-size: 0.78rem;

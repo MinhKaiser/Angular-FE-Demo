@@ -1,12 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { HeaderComponent, FooterComponent } from '@shared/components';
+import { DevDiagnosticsComponent, HeaderComponent, FooterComponent } from '@shared/components';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, HeaderComponent, FooterComponent],
+  imports: [CommonModule, RouterOutlet, HeaderComponent, FooterComponent, DevDiagnosticsComponent],
   template: `
     <div class="app-layout">
       <app-header></app-header>
@@ -14,6 +14,7 @@ import { HeaderComponent, FooterComponent } from '@shared/components';
         <router-outlet></router-outlet>
       </main>
       <app-footer></app-footer>
+      <app-dev-diagnostics></app-dev-diagnostics>
     </div>
   `,
   styles: [`

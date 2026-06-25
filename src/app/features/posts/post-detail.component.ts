@@ -1,28 +1,33 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, effect, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
+import { LoadingStateComponent, PageBackLinkComponent, StatusBannerComponent } from '@shared/components';
 import { PostDetailViewComponent } from './components/post-detail-view.component';
 import { PostDetailStore, type PostDetailStoreInstance } from './state/post-detail.store';
 
 @Component({
   selector: 'app-post-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, PostDetailViewComponent],
+  imports: [CommonModule, PostDetailViewComponent, PageBackLinkComponent, StatusBannerComponent, LoadingStateComponent],
   providers: [PostDetailStore],
   template: `
     <section class="app-page post-detail-page">
       <div class="app-shell app-shell--compact">
-        <a routerLink="/posts" class="back-link">
-          Back to posts
-        </a>
+        <app-page-back-link to="/posts" label="Back to posts" />
 
-        <div *ngIf="store.errorMessage()" class="alert">
-          {{ store.errorMessage() }}
-        </div>
+        <app-status-banner
+          *ngIf="store.errorMessage()"
+          tone="error"
+          icon="error_outline"
+          [message]="store.errorMessage()"
+        />
 
-        <div *ngIf="store.isLoading()" class="spinner-wrap">
-          <div class="spinner"></div>
-        </div>
+        <app-loading-state
+          *ngIf="store.isLoading()"
+          title="Loading post detail"
+          message="Fetching the article body and comment thread for this story."
+        />
 
         <app-post-detail-view
           *ngIf="!store.isLoading() && store.post()"
@@ -39,11 +44,16 @@ import { PostDetailStore, type PostDetailStoreInstance } from './state/post-deta
     }
   `],
 })
-export class PostDetailComponent implements OnInit {
+export class PostDetailComponent {
   private readonly route = inject(ActivatedRoute);
   protected readonly store: PostDetailStoreInstance = inject(PostDetailStore);
+  private readonly routeParamMap = toSignal(this.route.paramMap, {
+    initialValue: this.route.snapshot.paramMap,
+  });
 
-  ngOnInit(): void {
-    this.store.loadPost(Number(this.route.snapshot.paramMap.get('id')));
+  constructor() {
+    effect(() => {
+      this.store.loadPost(Number(this.routeParamMap().get('id')));
+    });
   }
 }
