@@ -40,10 +40,7 @@ playwright-report/
 test-results/
 
 # Local training/reference documents
-/TaiLieuBE.txt
-/ARCHITECTURE.md
-/CONTRIBUTING.md
-/SECURITY.md
+/TaiLieu
 /docs-local/
 *.local.md
 *.notes.md
