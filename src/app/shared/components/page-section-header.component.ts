@@ -1,16 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, input } from '@angular/core';
+import { AfterContentChecked, AfterContentInit, Component, contentChild, input, signal } from '@angular/core';
 import { IgxCardModule } from 'igniteui-angular/card';
 import { IgxChipsModule } from 'igniteui-angular/chips';
 import { IgxIconModule } from 'igniteui-angular/icon';
+import { PageActionsDirective } from './page-actions.directive';
 
 @Component({
   selector: 'app-page-section-header',
-  standalone: true,
   imports: [CommonModule, IgxCardModule, IgxChipsModule, IgxIconModule],
   template: `
     <igx-card class="page-section-header">
       <igx-card-content class="page-section-header__content">
+
         <div class="page-section-header__copy">
           <div class="page-section-header__icon">
             <igx-icon>{{ icon() }}</igx-icon>
@@ -18,19 +19,27 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
           <div class="page-section-header__text">
             <p class="page-section-header__eyebrow">{{ eyebrow() }}</p>
+
             <div class="page-section-header__title-row">
               <h1>{{ title() }}</h1>
-              <igx-chip *ngIf="chipLabel()" [variant]="chipVariant()">
-                {{ chipLabel() }}
-              </igx-chip>
+
+              @if (chipLabel()) {
+                <igx-chip [variant]="chipVariant()">
+                  {{ chipLabel() }}
+                </igx-chip>
+              }
             </div>
+
             <p class="page-section-header__meta">{{ meta() }}</p>
           </div>
         </div>
 
-        <div class="page-section-header__actions">
-          <ng-content select="[page-actions]"></ng-content>
-        </div>
+        @if (hasProjectedActions()) {
+          <div class="page-section-header__actions">
+            <ng-content select="[page-actions]"></ng-content>
+          </div>
+        }
+
       </igx-card-content>
     </igx-card>
   `,
@@ -128,11 +137,25 @@ import { IgxIconModule } from 'igniteui-angular/icon';
     }
   `],
 })
-export class PageSectionHeaderComponent {
+export class PageSectionHeaderComponent implements AfterContentInit, AfterContentChecked {
   readonly eyebrow = input.required<string>();
   readonly title = input.required<string>();
   readonly meta = input.required<string>();
   readonly icon = input<string>('dashboard');
   readonly chipLabel = input<string>('');
   readonly chipVariant = input<'primary' | 'info' | 'success' | 'warning'>('primary');
+  protected readonly hasProjectedActions = signal(false);
+  private readonly projectedActions = contentChild(PageActionsDirective);
+
+  ngAfterContentInit(): void {
+    this.syncProjectedActions();
+  }
+
+  ngAfterContentChecked(): void {
+    this.syncProjectedActions();
+  }
+
+  private syncProjectedActions(): void {
+    this.hasProjectedActions.set(!!this.projectedActions());
+  }
 }

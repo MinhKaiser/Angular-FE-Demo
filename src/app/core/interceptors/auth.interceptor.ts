@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { HttpErrorResponse, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { BehaviorSubject, catchError, filter, switchMap, take, throwError } from 'rxjs';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '@core/services/auth.service';
 
 const TOKEN_ATTACHED_PATHS = ['/auth/me'] as const;
 const TOKEN_REFRESHABLE_PATHS = ['/auth/me'] as const;

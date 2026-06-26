@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { IgxButtonDirective, IgxToggleActionDirective } from 'igniteui-angular/directives';
@@ -18,7 +18,6 @@ type WorkspaceMode = 'overview' | 'catalog' | 'ops';
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -38,7 +37,7 @@ type WorkspaceMode = 'overview' | 'catalog' | 'ops';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   protected readonly store: DashboardStoreInstance = inject(DashboardStore);
 
   protected readonly workspaceModes = [
@@ -114,5 +113,9 @@ export class DashboardComponent {
 
   protected activeModeLabel(): string {
     return this.workspaceModes.find(mode => mode.id === this.workspaceMode())?.label ?? 'Overview';
+  }
+
+  ngOnInit(): void {
+    this.store.loadStatistics();
   }
 }

@@ -1,15 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnChanges, SimpleChanges, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, input, output, signal } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ProductCategoryOption } from '../state/products.store';
+import { Subscription } from 'rxjs';
 import { IgxButtonDirective } from 'igniteui-angular/directives';
 import { IgxIconModule } from 'igniteui-angular/icon';
 import { IgxInputGroupModule } from 'igniteui-angular/input-group';
 import { IgxSelectModule } from 'igniteui-angular/select';
-
+import { ProductCategoryOption } from '@features/products/state/products.store';
 @Component({
   selector: 'app-product-filter',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -24,7 +23,9 @@ import { IgxSelectModule } from 'igniteui-angular/select';
       <igx-input-group type="box" class="filter-field">
         <igx-icon igxPrefix>search</igx-icon>
         <label igxLabel>Search by title</label>
+
         <input
+          #searchInput
           igxInput
           type="search"
           [formControl]="searchControl"
@@ -40,10 +41,16 @@ import { IgxSelectModule } from 'igniteui-angular/select';
         (ngModelChange)="categoryChange.emit($event ?? '')"
       >
         <label igxLabel>Category</label>
-        <igx-select-item value="">All categories</igx-select-item>
-        <igx-select-item *ngFor="let category of categories()" [value]="category.slug">
-          {{ category.name }}
+
+        <igx-select-item value="">
+          All categories
         </igx-select-item>
+
+        @for (category of categories(); track category.slug) {
+          <igx-select-item [value]="category.slug">
+            {{ category.name }}
+          </igx-select-item>
+        }
       </igx-select>
 
       <button
@@ -54,7 +61,7 @@ import { IgxSelectModule } from 'igniteui-angular/select';
         [disabled]="isLoading()"
       >
         <igx-icon>travel_explore</igx-icon>
-        Search
+        Search {{ searchLength() ? '(' + searchLength() + ')' : '' }}
       </button>
     </div>
   `,
@@ -95,23 +102,50 @@ import { IgxSelectModule } from 'igniteui-angular/select';
     }
   `],
 })
-export class ProductFilterComponent implements OnChanges {
+export class ProductFilterComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   readonly categories = input.required<readonly ProductCategoryOption[]>();
   readonly selectedCategory = input('');
   readonly searchTerm = input('');
   readonly isLoading = input(false);
   readonly search = output<string>();
   readonly categoryChange = output<string>();
+  readonly searchLength = signal(0);
 
   readonly searchControl = new FormControl('', { nonNullable: true });
+  private readonly subscriptions = new Subscription();
+
+  @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
+
+  ngOnInit(): void {
+    this.searchLength.set(this.searchControl.value.trim().length);
+    this.subscriptions.add(
+      this.searchControl.valueChanges.subscribe(value => {
+        this.searchLength.set(value.trim().length);
+      })
+    );
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if ('searchTerm' in changes) {
       const nextValue = this.searchTerm() ?? '';
       if (this.searchControl.value !== nextValue) {
         this.searchControl.setValue(nextValue, { emitEvent: false });
+        this.searchLength.set(nextValue.trim().length);
       }
     }
+  }
+
+  ngAfterViewInit(): void {
+    if (this.searchControl.value) {
+      queueMicrotask(() => this.searchInput?.nativeElement.setSelectionRange(
+        this.searchControl.value.length,
+        this.searchControl.value.length
+      ));
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   submitSearch(): void {

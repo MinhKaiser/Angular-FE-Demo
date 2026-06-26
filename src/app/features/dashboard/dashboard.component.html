@@ -21,22 +21,26 @@
         </button>
 
         <igx-drop-down #quickActionsMenu>
-          <igx-drop-down-item *ngFor="let action of quickActions">
-            <div class="menu-item">
-              <igx-icon>{{ action.icon }}</igx-icon>
-              <div>
-                <strong>{{ action.label }}</strong>
-                <span>{{ action.description }}</span>
+          @for (action of quickActions; track action.label) {
+            <igx-drop-down-item>
+              <div class="menu-item">
+                <igx-icon>{{ action.icon }}</igx-icon>
+                <div>
+                  <strong>{{ action.label }}</strong>
+                  <span>{{ action.description }}</span>
+                </div>
               </div>
-            </div>
-          </igx-drop-down-item>
+            </igx-drop-down-item>
+          }
         </igx-drop-down>
       </div>
     </div>
 
-    <div *ngIf="store.errorMessage()" class="alert">
-      {{ store.errorMessage() }}
-    </div>
+    @if (store.errorMessage()) {
+      <div class="alert">
+        {{ store.errorMessage() }}
+      </div>
+    }
 
     <div class="stats-grid">
       <app-dashboard-stat-card
@@ -82,6 +86,7 @@
         <div class="controls-grid">
           <div class="control-block">
             <label class="control-label">Workspace mode</label>
+
             <igx-select
               type="box"
               placeholder="Pick a mode"
@@ -89,14 +94,18 @@
               (ngModelChange)="workspaceMode.set($event)"
             >
               <label igxLabel>Mode</label>
-              <igx-select-item *ngFor="let mode of workspaceModes" [value]="mode.id">
-                {{ mode.label }}
-              </igx-select-item>
+
+              @for (mode of workspaceModes; track mode.id) {
+                <igx-select-item [value]="mode.id">
+                  {{ mode.label }}
+                </igx-select-item>
+              }
             </igx-select>
           </div>
 
           <div class="control-block">
             <label class="control-label">Data channel</label>
+
             <igx-simple-combo
               placeholder="Pick a dataset"
               searchPlaceholder="Search dataset"
@@ -111,6 +120,7 @@
 
           <div class="control-block">
             <label class="control-label">Category focus</label>
+
             <igx-select
               type="box"
               placeholder="All categories"
@@ -118,10 +128,16 @@
               (ngModelChange)="selectedCategory.set($event)"
             >
               <label igxLabel>Category</label>
-              <igx-select-item value="all">All categories</igx-select-item>
-              <igx-select-item *ngFor="let category of store.categories()" [value]="category">
-                {{ category }}
+
+              <igx-select-item value="all">
+                All categories
               </igx-select-item>
+
+              @for (category of store.categories(); track category) {
+                <igx-select-item [value]="category">
+                  {{ category }}
+                </igx-select-item>
+              }
             </igx-select>
           </div>
 
@@ -151,6 +167,7 @@
             <p class="panel-eyebrow">Ignite visuals</p>
             <h2>Performance rings</h2>
           </div>
+
           <span class="chip">{{ activeModeLabel() }}</span>
         </div>
 
@@ -163,6 +180,7 @@
               [textVisibility]="true"
             >
             </igx-circular-bar>
+
             <p>Products</p>
           </div>
 
@@ -174,6 +192,7 @@
               [textVisibility]="true"
             >
             </igx-circular-bar>
+
             <p>Posts</p>
           </div>
 
@@ -185,6 +204,7 @@
               [textVisibility]="true"
             >
             </igx-circular-bar>
+
             <p>Todos</p>
           </div>
         </div>
@@ -195,7 +215,12 @@
               <span>Catalog coverage</span>
               <strong>{{ catalogCoverage() }}%</strong>
             </div>
-            <igx-linear-bar [max]="100" [value]="catalogCoverage()" type="info"></igx-linear-bar>
+
+            <igx-linear-bar
+              [max]="100"
+              [value]="catalogCoverage()"
+              type="info"
+            ></igx-linear-bar>
           </div>
 
           <div class="linear-metric">
@@ -203,7 +228,12 @@
               <span>Stock readiness</span>
               <strong>{{ stockReadiness() }}%</strong>
             </div>
-            <igx-linear-bar [max]="100" [value]="stockReadiness()" type="success"></igx-linear-bar>
+
+            <igx-linear-bar
+              [max]="100"
+              [value]="stockReadiness()"
+              type="success"
+            ></igx-linear-bar>
           </div>
         </div>
       </article>
@@ -215,35 +245,42 @@
           <p class="panel-eyebrow">Ignite data grid</p>
           <h2>Featured products</h2>
         </div>
+
         <span class="chip">{{ filteredProducts().length }} rows</span>
       </div>
 
-      <div *ngIf="store.isLoading()" class="dashboard-loading">Loading dashboard data...</div>
+      @if (store.isLoading()) {
+        <div class="dashboard-loading">
+          Loading dashboard data...
+        </div>
+      }
 
-      <igx-grid
-        *ngIf="!store.isLoading()"
-        class="dashboard-grid"
-        width="100%"
-        height="430px"
-        [data]="filteredProducts()"
-        [primaryKey]="'id'"
-        [allowFiltering]="true"
-        [filterMode]="'quickFilter'"
-        [moving]="true"
-        [rowSelection]="'multiple'"
-      >
-        <igx-column field="title" header="Product" [sortable]="true"></igx-column>
-        <igx-column field="category" header="Category" [sortable]="true"></igx-column>
-        <igx-column field="brand" header="Brand" [sortable]="true"></igx-column>
-        <igx-column field="price" header="Price" [sortable]="true"></igx-column>
-        <igx-column field="rating" header="Rating" [sortable]="true"></igx-column>
-        <igx-column field="stock" header="Stock" [sortable]="true"></igx-column>
-      </igx-grid>
+      @if (!store.isLoading()) {
+        <igx-grid
+          class="dashboard-grid"
+          width="100%"
+          height="430px"
+          [data]="filteredProducts()"
+          [primaryKey]="'id'"
+          [allowFiltering]="true"
+          [filterMode]="'quickFilter'"
+          [moving]="true"
+          [rowSelection]="'multiple'"
+        >
+          <igx-column field="title" header="Product" [sortable]="true"></igx-column>
+          <igx-column field="category" header="Category" [sortable]="true"></igx-column>
+          <igx-column field="brand" header="Brand" [sortable]="true"></igx-column>
+          <igx-column field="price" header="Price" [sortable]="true"></igx-column>
+          <igx-column field="rating" header="Rating" [sortable]="true"></igx-column>
+          <igx-column field="stock" header="Stock" [sortable]="true"></igx-column>
+        </igx-grid>
+      }
     </article>
 
     <div class="quick-links">
       <a routerLink="/products" class="quick-link card">
         <igx-icon>inventory_2</igx-icon>
+
         <div>
           <h2>Browse products</h2>
           <p>Catalog items, ratings, prices, stock, and product details.</p>
@@ -252,6 +289,7 @@
 
       <a routerLink="/posts" class="quick-link card">
         <igx-icon>article</igx-icon>
+
         <div>
           <h2>Read posts</h2>
           <p>Articles, tags, engagement numbers, and reader comments.</p>
@@ -260,6 +298,7 @@
 
       <a routerLink="/todos" class="quick-link card">
         <igx-icon>check_circle</igx-icon>
+
         <div>
           <h2>Manage todos</h2>
           <p>Personal tasks tied to the signed-in DummyJSON user.</p>

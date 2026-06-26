@@ -8,57 +8,61 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-header',
-  standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive, IgxChipsModule, IgxButtonDirective, IgxIconModule],
   template: `
-    <header class="site-header">
-      <nav class="site-header__nav">
-        <a routerLink="/" class="brand">
-          <span class="brand__mark">DJ</span>
-          <span class="brand__name">Dummy Shop</span>
+  <header class="site-header">
+    <nav class="site-header__nav">
+      <a routerLink="/" class="brand">
+        <span class="brand__mark">DJ</span>
+        <span class="brand__name">Dummy Shop</span>
+      </a>
+
+      <div class="site-header__links">
+        <a routerLink="/products" routerLinkActive="is-active" class="site-header__link">
+          <igx-icon>inventory_2</igx-icon>
+          Products
         </a>
 
-        <div class="site-header__links">
-          <a routerLink="/products" routerLinkActive="is-active" class="site-header__link">
-            <igx-icon>inventory_2</igx-icon>
-            Products
-          </a>
-          <a routerLink="/posts" routerLinkActive="is-active" class="site-header__link">
-            <igx-icon>article</igx-icon>
-            Posts
-          </a>
-          <a routerLink="/todos" routerLinkActive="is-active" class="site-header__link">
-            <igx-icon>check_circle</igx-icon>
-            Todos
-          </a>
-        </div>
+        <a routerLink="/posts" routerLinkActive="is-active" class="site-header__link">
+          <igx-icon>article</igx-icon>
+          Posts
+        </a>
 
-        <div class="site-header__actions">
-          <ng-container *ngIf="isAuthenticated(); else signInLink">
-            <igx-chip variant="primary" class="site-header__user">
-              <igx-icon igxPrefix>person</igx-icon>
-              {{ displayName() }}
-            </igx-chip>
-            <button
-              igxButton="outlined"
-              type="button"
-              (click)="onLogout()"
-              class="outline-button"
-            >
-              <igx-icon>logout</igx-icon>
-              Logout
-            </button>
-          </ng-container>
+        <a routerLink="/todos" routerLinkActive="is-active" class="site-header__link">
+          <igx-icon>check_circle</igx-icon>
+          Todos
+        </a>
+      </div>
 
-          <ng-template #signInLink>
-            <a routerLink="/auth/login" igxButton="contained" class="primary-button site-header__sign-in">
-              <igx-icon>login</igx-icon>
-              Sign in
-            </a>
-          </ng-template>
-        </div>
-      </nav>
-    </header>
+      <div class="site-header__actions">
+        @if (isAuthenticated()) {
+          <igx-chip variant="primary" class="site-header__user">
+            <igx-icon igxPrefix>person</igx-icon>
+            {{ displayName() }}
+          </igx-chip>
+
+          <button
+            igxButton="outlined"
+            type="button"
+            (click)="onLogout()"
+            class="outline-button"
+          >
+            <igx-icon>logout</igx-icon>
+            Logout
+          </button>
+        } @else {
+          <a
+            routerLink="/auth/login"
+            igxButton="contained"
+            class="primary-button site-header__sign-in"
+          >
+            <igx-icon>login</igx-icon>
+            Sign in
+          </a>
+        }
+      </div>
+    </nav>
+  </header>
   `,
   styles: [`
     .site-header {

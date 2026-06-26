@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnChanges, SimpleChanges, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, input, output, signal } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { PostTag } from '@shared/models';
 import { IgxButtonDirective } from 'igniteui-angular/directives';
 import { IgxIconModule } from 'igniteui-angular/icon';
@@ -9,7 +10,6 @@ import { IgxSelectModule } from 'igniteui-angular/select';
 
 @Component({
   selector: 'app-post-filter',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -24,7 +24,9 @@ import { IgxSelectModule } from 'igniteui-angular/select';
       <igx-input-group type="box" class="filter-field">
         <igx-icon igxPrefix>manage_search</igx-icon>
         <label igxLabel>Search posts</label>
+
         <input
+          #searchInput
           igxInput
           type="search"
           [formControl]="searchControl"
@@ -40,8 +42,16 @@ import { IgxSelectModule } from 'igniteui-angular/select';
         (ngModelChange)="tagChange.emit($event ?? '')"
       >
         <label igxLabel>Tag</label>
-        <igx-select-item value="">All tags</igx-select-item>
-        <igx-select-item *ngFor="let tag of tags()" [value]="tag.slug">{{ tag.name }}</igx-select-item>
+
+        <igx-select-item value="">
+          All tags
+        </igx-select-item>
+
+        @for (tag of tags(); track tag.slug) {
+          <igx-select-item [value]="tag.slug">
+            {{ tag.name }}
+          </igx-select-item>
+        }
       </igx-select>
 
       <button
@@ -52,7 +62,7 @@ import { IgxSelectModule } from 'igniteui-angular/select';
         [disabled]="isLoading()"
       >
         <igx-icon>search</igx-icon>
-        Search
+        Search {{ searchLength() ? '(' + searchLength() + ')' : '' }}
       </button>
     </div>
   `,
@@ -93,23 +103,50 @@ import { IgxSelectModule } from 'igniteui-angular/select';
     }
   `],
 })
-export class PostFilterComponent implements OnChanges {
+export class PostFilterComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   readonly tags = input.required<readonly PostTag[]>();
   readonly selectedTag = input('');
   readonly searchTerm = input('');
   readonly isLoading = input(false);
   readonly search = output<string>();
   readonly tagChange = output<string>();
+  readonly searchLength = signal(0);
 
   readonly searchControl = new FormControl('', { nonNullable: true });
+  private readonly subscriptions = new Subscription();
+
+  @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
+
+  ngOnInit(): void {
+    this.searchLength.set(this.searchControl.value.trim().length);
+    this.subscriptions.add(
+      this.searchControl.valueChanges.subscribe(value => {
+        this.searchLength.set(value.trim().length);
+      })
+    );
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if ('searchTerm' in changes) {
       const nextValue = this.searchTerm() ?? '';
       if (this.searchControl.value !== nextValue) {
         this.searchControl.setValue(nextValue, { emitEvent: false });
+        this.searchLength.set(nextValue.trim().length);
       }
     }
+  }
+
+  ngAfterViewInit(): void {
+    if (this.searchControl.value) {
+      queueMicrotask(() => this.searchInput?.nativeElement.setSelectionRange(
+        this.searchControl.value.length,
+        this.searchControl.value.length
+      ));
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   submitSearch(): void {

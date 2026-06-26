@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService, getEnvironmentConfig } from '@core/services';
 import { IgxButtonDirective } from 'igniteui-angular/directives';
 import { IgxCardModule } from 'igniteui-angular/card';
@@ -11,7 +11,6 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -29,9 +28,11 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
           <p>Use a DummyJSON account to continue.</p>
         </div>
 
-        <div *ngIf="error()" class="alert">
-          {{ error() }}
-        </div>
+        @if (error()) {
+          <div class="alert">
+            {{ error() }}
+          </div>
+        }
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
           <div class="login-form__field">
@@ -39,6 +40,7 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
               <igx-icon igxPrefix>person</igx-icon>
               <label igxLabel for="username">Username</label>
               <input
+                #usernameInput
                 id="username"
                 igxInput
                 type="text"
@@ -46,7 +48,12 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
                 autocomplete="username"
               />
             </igx-input-group>
-            <p *ngIf="isFieldInvalid('username')" class="login-form__error">Username is required.</p>
+
+            @if (isFieldInvalid('username')) {
+              <p class="login-form__error">
+                Username is required.
+              </p>
+            }
           </div>
 
           <div class="login-form__field">
@@ -61,7 +68,12 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
                 autocomplete="current-password"
               />
             </igx-input-group>
-            <p *ngIf="isFieldInvalid('password')" class="login-form__error">Password is required.</p>
+
+            @if (isFieldInvalid('password')) {
+              <p class="login-form__error">
+                Password is required.
+              </p>
+            }
           </div>
 
           <button
@@ -75,21 +87,22 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
           </button>
         </form>
 
-        <button
-          igxButton="outlined"
-          *ngIf="demoCredentials"
-          type="button"
-          (click)="useDemoCredentials()"
-          class="outline-button login-card__demo-button"
-        >
-          <igx-icon>bolt</igx-icon>
-          Use demo credentials
-        </button>
+        @if (demoCredentials) {
+          <button
+            igxButton="outlined"
+            type="button"
+            (click)="useDemoCredentials()"
+            class="outline-button login-card__demo-button"
+          >
+            <igx-icon>bolt</igx-icon>
+            Use demo credentials
+          </button>
 
-        <div *ngIf="demoCredentials" class="demo-credentials">
-          <p><span>Username:</span> {{ demoCredentials.username }}</p>
-          <p><span>Password:</span> {{ demoCredentials.password }}</p>
-        </div>
+          <div class="demo-credentials">
+            <p><span>Username:</span> {{ demoCredentials.username }}</p>
+            <p><span>Password:</span> {{ demoCredentials.password }}</p>
+          </div>
+        }
       </igx-card>
     </section>
   `,
@@ -184,24 +197,40 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
     }
   `],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly config = getEnvironmentConfig();
-  private readonly queryParamMap = toSignal(this.route.queryParamMap, {
-    initialValue: this.route.snapshot.queryParamMap,
-  });
+  private readonly subscriptions = new Subscription();
+  private returnUrl = '/dashboard';
+
+  @ViewChild('usernameInput') private usernameInput?: ElementRef<HTMLInputElement>;
 
   readonly isLoading = this.authService.isLoading;
   readonly error = this.authService.error;
   readonly demoCredentials = this.config.demoCredentials;
-  readonly returnUrl = computed(() => this.queryParamMap().get('returnUrl') || '/dashboard');
   readonly loginForm = this.fb.group({
     username: ['', Validators.required],
     password: ['', Validators.required],
   });
+
+  ngOnInit(): void {
+    this.subscriptions.add(
+      this.route.queryParamMap.subscribe(params => {
+        this.returnUrl = params.get('returnUrl') || '/dashboard';
+      })
+    );
+  }
+
+  ngAfterViewInit(): void {
+    queueMicrotask(() => this.usernameInput?.nativeElement.focus());
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
 
   onSubmit(): void {
     if (this.loginForm.invalid) {
@@ -213,7 +242,7 @@ export class LoginComponent {
       ...this.loginForm.getRawValue(),
       expiresInMins: 30,
     }).subscribe({
-      next: () => this.router.navigateByUrl(this.returnUrl()),
+      next: () => this.router.navigateByUrl(this.returnUrl),
     });
   }
 

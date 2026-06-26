@@ -1,27 +1,25 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import {
   EmptyStateComponent,
   LoadingStateComponent,
+  PageActionsDirective,
   PageSectionHeaderComponent,
   StatusBannerComponent,
 } from '@shared/components';
-import { Post } from '@shared/models';
 import { PostCardComponent } from './components/post-card.component';
 import { PostFilterComponent } from './components/post-filter.component';
 import { PostsStore, type PostsStoreInstance } from './state/posts.store';
 
 @Component({
   selector: 'app-posts-list',
-  standalone: true,
   imports: [
-    CommonModule,
     PostCardComponent,
     PostFilterComponent,
     StatusBannerComponent,
     LoadingStateComponent,
     EmptyStateComponent,
     PageSectionHeaderComponent,
+    PageActionsDirective,
   ],
   providers: [PostsStore],
   template: `
@@ -46,32 +44,38 @@ import { PostsStore, type PostsStoreInstance } from './state/posts.store';
           />
         </app-page-section-header>
 
-        <app-status-banner
-          *ngIf="store.errorMessage()"
-          tone="error"
-          icon="error_outline"
-          [message]="store.errorMessage()"
-        />
-
-        <app-loading-state
-          *ngIf="store.isLoading()"
-          title="Loading posts"
-          message="Fresh articles and tags are being prepared for the reading feed."
-        />
-
-        <div *ngIf="!store.isLoading() && store.posts().length > 0" class="post-list">
-          <app-post-card
-            *ngFor="let post of store.posts(); trackBy: trackByPostId"
-            [post]="post"
+        @if (store.errorMessage()) {
+          <app-status-banner
+            tone="error"
+            icon="error_outline"
+            [message]="store.errorMessage()"
           />
-        </div>
+        }
 
-        <app-empty-state
-          *ngIf="!store.isLoading() && store.posts().length === 0"
-          title="No posts found"
-          description="Try another keyword or tag to bring more stories into the feed."
-          icon="article"
-        />
+        @if (store.isLoading()) {
+          <app-loading-state
+            title="Loading posts"
+            message="Fresh articles and tags are being prepared for the reading feed."
+          />
+        }
+
+        @if (!store.isLoading() && store.posts().length > 0) {
+          <div class="post-list">
+            @for (post of store.posts(); track post.id) {
+              <app-post-card
+                [post]="post"
+              />
+            }
+          </div>
+        }
+
+        @if (!store.isLoading() && store.posts().length === 0) {
+          <app-empty-state
+            title="No posts found"
+            description="Try another keyword or tag to bring more stories into the feed."
+            icon="article"
+          />
+        }
       </div>
     </section>
   `,
@@ -87,10 +91,10 @@ import { PostsStore, type PostsStoreInstance } from './state/posts.store';
     }
   `],
 })
-export class PostsListComponent {
+export class PostsListComponent implements OnInit {
   protected readonly store: PostsStoreInstance = inject(PostsStore);
 
-  trackByPostId(_index: number, post: Post): number {
-    return post.id;
+  ngOnInit(): void {
+    this.store.loadInitialData();
   }
 }

@@ -5,7 +5,6 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-footer',
-  standalone: true,
   imports: [RouterLink, IgxChipsModule, IgxIconModule],
   template: `
     <footer class="site-footer">

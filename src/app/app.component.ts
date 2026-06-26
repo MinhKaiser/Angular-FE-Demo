@@ -5,7 +5,6 @@ import { DevDiagnosticsComponent, HeaderComponent, FooterComponent } from '@shar
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   imports: [CommonModule, RouterOutlet, HeaderComponent, FooterComponent, DevDiagnosticsComponent],
   template: `
     <div class="app-layout">

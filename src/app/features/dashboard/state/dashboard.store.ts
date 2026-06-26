@@ -1,5 +1,5 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { AuthService, PostService, ProductService, TodoService } from '@core/services';
 import type { Product } from '@shared/models';
@@ -74,12 +74,7 @@ export const DashboardStore = signalStore(
         });
       });
     },
-  })),
-  withHooks({
-    onInit(store) {
-      store.loadStatistics();
-    },
-  })
+  }))
 );
 
 export type DashboardStoreInstance = InstanceType<typeof DashboardStore>;

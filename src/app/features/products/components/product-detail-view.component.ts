@@ -10,7 +10,6 @@ import { IgxProgressBarModule } from 'igniteui-angular/progressbar';
 
 @Component({
   selector: 'app-product-detail-view',
-  standalone: true,
   imports: [
     CommonModule,
     CurrencyFormatPipe,
@@ -21,80 +20,94 @@ import { IgxProgressBarModule } from 'igniteui-angular/progressbar';
     IgxProgressBarModule,
   ],
   template: `
-    <ng-container *ngIf="product() as item">
-      <div class="product-detail">
-        <igx-card elevated="true" class="product-detail__media">
-          <img [src]="item.images[0] || item.thumbnail" [alt]="item.title" />
-        </igx-card>
+  @if (product(); as item) {
+    <div class="product-detail">
+      <igx-card elevated="true" class="product-detail__media">
+        <img [src]="item.images[0] || item.thumbnail" [alt]="item.title" />
+      </igx-card>
 
-        <div class="product-detail__summary">
-          <p class="product-detail__category">{{ item.category }}</p>
-          <h1>{{ item.title }}</h1>
-          <p class="product-detail__description">{{ item.description }}</p>
+      <div class="product-detail__summary">
+        <p class="product-detail__category">{{ item.category }}</p>
+        <h1>{{ item.title }}</h1>
+        <p class="product-detail__description">{{ item.description }}</p>
 
-          <div class="product-detail__meta">
-            <span class="product-detail__price">{{ item.price | appCurrency }}</span>
-            <igx-chip class="product-detail__rating" variant="warning">
-              <igx-icon igxPrefix>star</igx-icon>
-              Rating {{ item.rating }}
-            </igx-chip>
-            <igx-chip variant="info">
-              <igx-icon igxPrefix>inventory_2</igx-icon>
-              Stock {{ item.stock }}
-            </igx-chip>
-          </div>
+        <div class="product-detail__meta">
+          <span class="product-detail__price">{{ item.price | appCurrency }}</span>
 
-          <div class="product-detail__stock-bar">
-            <div class="product-detail__stock-header">
-              <span>Stock health</span>
-              <strong>{{ item.stock }} / 150</strong>
-            </div>
-            <igx-linear-bar [max]="150" [value]="item.stock" type="info"></igx-linear-bar>
-          </div>
+          <igx-chip class="product-detail__rating" variant="warning">
+            <igx-icon igxPrefix>star</igx-icon>
+            Rating {{ item.rating }}
+          </igx-chip>
 
-          <dl class="product-detail__facts">
-            <igx-card elevated="true" class="fact">
-              <dt>Availability</dt>
-              <dd>{{ item.availabilityStatus }}</dd>
-            </igx-card>
-            <igx-card elevated="true" class="fact">
-              <dt>Shipping</dt>
-              <dd>{{ item.shippingInformation }}</dd>
-            </igx-card>
-            <igx-card elevated="true" class="fact">
-              <dt>Warranty</dt>
-              <dd>{{ item.warrantyInformation }}</dd>
-            </igx-card>
-            <igx-card elevated="true" class="fact">
-              <dt>Return policy</dt>
-              <dd>{{ item.returnPolicy }}</dd>
-            </igx-card>
-          </dl>
+          <igx-chip variant="info">
+            <igx-icon igxPrefix>inventory_2</igx-icon>
+            Stock {{ item.stock }}
+          </igx-chip>
         </div>
-      </div>
 
-      <section class="reviews">
-        <h2>Reviews</h2>
-        <div class="reviews__grid">
-          <igx-card *ngFor="let review of item.reviews" elevated="true" class="review-card">
+        <div class="product-detail__stock-bar">
+          <div class="product-detail__stock-header">
+            <span>Stock health</span>
+            <strong>{{ item.stock }} / 150</strong>
+          </div>
+
+          <igx-linear-bar
+            [max]="150"
+            [value]="item.stock"
+            type="info">
+          </igx-linear-bar>
+        </div>
+
+        <dl class="product-detail__facts">
+          <igx-card elevated="true" class="fact">
+            <dt>Availability</dt>
+            <dd>{{ item.availabilityStatus }}</dd>
+          </igx-card>
+
+          <igx-card elevated="true" class="fact">
+            <dt>Shipping</dt>
+            <dd>{{ item.shippingInformation }}</dd>
+          </igx-card>
+
+          <igx-card elevated="true" class="fact">
+            <dt>Warranty</dt>
+            <dd>{{ item.warrantyInformation }}</dd>
+          </igx-card>
+
+          <igx-card elevated="true" class="fact">
+            <dt>Return policy</dt>
+            <dd>{{ item.returnPolicy }}</dd>
+          </igx-card>
+        </dl>
+      </div>
+    </div>
+
+    <section class="reviews">
+      <h2>Reviews</h2>
+
+      <div class="reviews__grid">
+        @for (review of item.reviews; track review.reviewerEmail) {
+          <igx-card elevated="true" class="review-card">
             <div class="review-card__header">
               <igx-avatar
                 [initials]="review.reviewerName.slice(0, 2).toUpperCase()"
                 shape="circle"
-                size="small"
-              >
+                size="small">
               </igx-avatar>
+
               <div>
                 <p class="review-card__name">{{ review.reviewerName }}</p>
                 <p class="muted">Rating {{ review.rating }}</p>
               </div>
             </div>
+
             <p>{{ review.comment }}</p>
           </igx-card>
-        </div>
-      </section>
-    </ng-container>
-  `,
+        }
+      </div>
+    </section>
+  }
+`,
   styles: [`
     .product-detail {
       display: grid;

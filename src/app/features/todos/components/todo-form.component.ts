@@ -1,12 +1,13 @@
-import { Component, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, input, output, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { IgxButtonDirective } from 'igniteui-angular/directives';
 import { IgxIconModule } from 'igniteui-angular/icon';
 import { IgxInputGroupModule } from 'igniteui-angular/input-group';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-todo-form',
-  standalone: true,
   imports: [ReactiveFormsModule, IgxButtonDirective, IgxIconModule, IgxInputGroupModule],
   template: `
     <form (ngSubmit)="submitTodo()" class="todo-form card">
@@ -14,12 +15,14 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
         <igx-icon igxPrefix>playlist_add_check_circle</igx-icon>
         <label igxLabel>Add a new todo</label>
         <input
+          #todoInput
           igxInput
           type="text"
           [formControl]="todoControl"
           autocomplete="off"
         />
       </igx-input-group>
+      <p class="todo-form__hint">{{ remainingCharacters() }} characters remaining</p>
       <button
         igxButton="contained"
         type="submit"
@@ -46,21 +49,56 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
       align-items: center;
     }
 
+    .todo-form__hint {
+      grid-column: 1 / 2;
+      margin: -0.25rem 0 0;
+      color: var(--app-text-muted);
+      font-size: 0.8rem;
+    }
+
     @media (max-width: 560px) {
       .todo-form {
         grid-template-columns: 1fr;
       }
+
+      .todo-form__hint {
+        grid-column: auto;
+      }
     }
   `],
 })
-export class TodoFormComponent {
+export class TodoFormComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly router = inject(Router);
+  private readonly subscriptions = new Subscription();
+
   readonly isSaving = input(false);
   readonly addTodo = output<string>();
+  readonly remainingCharacters = signal(120);
 
   readonly todoControl = new FormControl('', {
     nonNullable: true,
     validators: [Validators.required, Validators.maxLength(120)],
   });
+
+  @ViewChild('todoInput') private todoInput?: ElementRef<HTMLInputElement>;
+
+  ngOnInit(): void {
+    this.subscriptions.add(
+      this.todoControl.valueChanges.subscribe(value => {
+        this.remainingCharacters.set(Math.max(0, 120 - value.length));
+      })
+    );
+  }
+
+  ngAfterViewInit(): void {
+    if (this.router.url.includes('/todos')) {
+      queueMicrotask(() => this.todoInput?.nativeElement.focus());
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
 
   submitTodo(): void {
     if (this.todoControl.invalid) {
@@ -70,5 +108,6 @@ export class TodoFormComponent {
 
     this.addTodo.emit(this.todoControl.value);
     this.todoControl.reset('');
+    this.remainingCharacters.set(120);
   }
 }

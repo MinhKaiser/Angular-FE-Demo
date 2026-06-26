@@ -12,136 +12,159 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-dev-diagnostics',
-  standalone: true,
   imports: [CommonModule, FormsModule, IgxButtonDirective, IgxIconModule],
   template: `
-    <section *ngIf="diagnostics.enabled()" class="dev-diagnostics">
-      <button
-        *ngIf="diagnostics.isHidden()"
-        type="button"
-        igxButton="contained"
-        class="dev-diagnostics__launcher"
-        (click)="diagnostics.show()"
-      >
-        <igx-icon>bug_report</igx-icon>
-        Open diagnostics
-        <span class="dev-diagnostics__count">{{ diagnostics.errorCount() }}</span>
-      </button>
+    @if (diagnostics.enabled()) {
+      <section class="dev-diagnostics">
+        
+        @if (diagnostics.isHidden()) {
+          <button
+            type="button"
+            igxButton="contained"
+            class="dev-diagnostics__launcher"
+            (click)="diagnostics.show()"
+          >
+            <igx-icon>bug_report</igx-icon>
+            Open diagnostics
+            <span class="dev-diagnostics__count">{{ diagnostics.errorCount() }}</span>
+          </button>
+        } @else {
 
-      <ng-container *ngIf="!diagnostics.isHidden()">
-      <button
-        type="button"
-        igxButton="contained"
-        class="dev-diagnostics__toggle"
-        (click)="diagnostics.toggle()"
-      >
-        <igx-icon>{{ diagnostics.isExpanded() ? 'bug_report' : 'terminal' }}</igx-icon>
-        Dev diagnostics
-        <span class="dev-diagnostics__count">{{ diagnostics.errorCount() }}</span>
-      </button>
+          <button
+            type="button"
+            igxButton="contained"
+            class="dev-diagnostics__toggle"
+            (click)="diagnostics.toggle()"
+          >
+            <igx-icon>{{ diagnostics.isExpanded() ? 'bug_report' : 'terminal' }}</igx-icon>
+            Dev diagnostics
+            <span class="dev-diagnostics__count">{{ diagnostics.errorCount() }}</span>
+          </button>
 
-      <div *ngIf="diagnostics.isExpanded()" class="dev-diagnostics__panel card">
-        <div class="dev-diagnostics__header">
-          <div>
-            <strong>Live FE diagnostics</strong>
-            <p>
-              {{ diagnostics.activeSummary().filtered }} / {{ diagnostics.activeSummary().total }}
-              entries shown
-            </p>
-          </div>
+          @if (diagnostics.isExpanded()) {
+            <div class="dev-diagnostics__panel card">
+              
+              <div class="dev-diagnostics__header">
+                <div>
+                  <strong>Live FE diagnostics</strong>
+                  <p>
+                    {{ diagnostics.activeSummary().filtered }} /
+                    {{ diagnostics.activeSummary().total }} entries shown
+                  </p>
+                </div>
 
-          <div class="dev-diagnostics__actions">
-            <button type="button" igxButton="flat" (click)="copyAll()">Copy all</button>
-            <button type="button" igxButton="flat" (click)="diagnostics.clear()">Clear</button>
-            <button type="button" igxButton="flat" (click)="diagnostics.hide()">Hide</button>
-          </div>
-        </div>
+                <div class="dev-diagnostics__actions">
+                  <button type="button" igxButton="flat" (click)="copyAll()">Copy all</button>
+                  <button type="button" igxButton="flat" (click)="diagnostics.clear()">Clear</button>
+                  <button type="button" igxButton="flat" (click)="diagnostics.hide()">Hide</button>
+                </div>
+              </div>
 
-        <div class="dev-diagnostics__toolbar">
-          <input
-            class="field dev-diagnostics__search"
-            type="search"
-            placeholder="Search message, route, details"
-            [ngModel]="diagnostics.searchTerm()"
-            (ngModelChange)="diagnostics.setSearchTerm($event)"
-          />
+              <div class="dev-diagnostics__toolbar">
+                <input
+                  class="field dev-diagnostics__search"
+                  type="search"
+                  placeholder="Search message, route, details"
+                  [ngModel]="diagnostics.searchTerm()"
+                  (ngModelChange)="diagnostics.setSearchTerm($event)"
+                />
 
-          <div class="dev-diagnostics__filters">
-            <button
-              *ngFor="let filter of sourceFilters"
-              type="button"
-              igxButton="flat"
-              class="dev-diagnostics__filter"
-              [class.is-active]="diagnostics.sourceFilter() === filter"
-              (click)="diagnostics.setSourceFilter(filter)"
-            >
-              {{ filter }}
-            </button>
-          </div>
+                <div class="dev-diagnostics__filters">
+                  @for (filter of sourceFilters; track filter) {
+                    <button
+                      type="button"
+                      igxButton="flat"
+                      class="dev-diagnostics__filter"
+                      [class.is-active]="diagnostics.sourceFilter() === filter"
+                      (click)="diagnostics.setSourceFilter(filter)"
+                    >
+                      {{ filter }}
+                    </button>
+                  }
+                </div>
 
-          <div class="dev-diagnostics__filters">
-            <button
-              *ngFor="let filter of levelFilters"
-              type="button"
-              igxButton="flat"
-              class="dev-diagnostics__filter"
-              [class.is-active]="diagnostics.levelFilter() === filter"
-              (click)="diagnostics.setLevelFilter(filter)"
-            >
-              {{ filter }}
-            </button>
-          </div>
+                <div class="dev-diagnostics__filters">
+                  @for (filter of levelFilters; track filter) {
+                    <button
+                      type="button"
+                      igxButton="flat"
+                      class="dev-diagnostics__filter"
+                      [class.is-active]="diagnostics.levelFilter() === filter"
+                      (click)="diagnostics.setLevelFilter(filter)"
+                    >
+                      {{ filter }}
+                    </button>
+                  }
+                </div>
 
-          <div class="dev-diagnostics__toggles">
-            <label class="dev-diagnostics__checkbox">
-              <input
-                type="checkbox"
-                [checked]="diagnostics.persistLogs()"
-                (change)="diagnostics.togglePersistLogs()"
-              />
-              Keep logs after reload
-            </label>
+                <div class="dev-diagnostics__toggles">
+                  <label class="dev-diagnostics__checkbox">
+                    <input
+                      type="checkbox"
+                      [checked]="diagnostics.persistLogs()"
+                      (change)="diagnostics.togglePersistLogs()"
+                    />
+                    Keep logs after reload
+                  </label>
 
-            <label class="dev-diagnostics__checkbox">
-              <input
-                type="checkbox"
-                [checked]="diagnostics.autoClearOnNavigation()"
-                (change)="diagnostics.toggleAutoClearOnNavigation()"
-              />
-              Auto-clear on navigation
-            </label>
-          </div>
-        </div>
+                  <label class="dev-diagnostics__checkbox">
+                    <input
+                      type="checkbox"
+                      [checked]="diagnostics.autoClearOnNavigation()"
+                      (change)="diagnostics.toggleAutoClearOnNavigation()"
+                    />
+                    Auto-clear on navigation
+                  </label>
+                </div>
+              </div>
 
-        <div *ngIf="diagnostics.filteredEntries().length === 0" class="dev-diagnostics__empty">
-          No diagnostics match the current filters.
-        </div>
+              @if (diagnostics.filteredEntries().length === 0) {
+                <div class="dev-diagnostics__empty">
+                  No diagnostics match the current filters.
+                </div>
+              }
 
-        <article *ngFor="let entry of diagnostics.filteredEntries()" class="dev-diagnostics__entry">
-          <div class="dev-diagnostics__entry-top">
-            <div class="dev-diagnostics__badges">
-              <span class="dev-diagnostics__badge">{{ entry.source }}</span>
-              <span class="dev-diagnostics__badge">{{ entry.level }}</span>
-              <span class="dev-diagnostics__badge">{{ entry.timestamp }}</span>
-              <span class="dev-diagnostics__badge">{{ entry.route }}</span>
-              <span *ngIf="entry.count > 1" class="dev-diagnostics__badge">x{{ entry.count }}</span>
+              @for (entry of diagnostics.filteredEntries(); track entry.id) {
+                <article class="dev-diagnostics__entry">
+
+                  <div class="dev-diagnostics__entry-top">
+                    <div class="dev-diagnostics__badges">
+                      <span class="dev-diagnostics__badge">{{ entry.source }}</span>
+                      <span class="dev-diagnostics__badge">{{ entry.level }}</span>
+                      <span class="dev-diagnostics__badge">{{ entry.timestamp }}</span>
+                      <span class="dev-diagnostics__badge">{{ entry.route }}</span>
+
+                      @if (entry.count > 1) {
+                        <span class="dev-diagnostics__badge">x{{ entry.count }}</span>
+                      }
+                    </div>
+
+                    <div class="dev-diagnostics__entry-actions">
+                      <button type="button" igxButton="flat" (click)="copyEntry(entry)">Copy</button>
+                      <button type="button" igxButton="flat" (click)="diagnostics.remove(entry.id)">
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+
+                  <p class="dev-diagnostics__message">{{ entry.message }}</p>
+
+                  @if (entry.details) {
+                    <details class="dev-diagnostics__details-wrap">
+                      <summary>Details</summary>
+                      <pre class="dev-diagnostics__details">{{ entry.details }}</pre>
+                    </details>
+                  }
+
+                </article>
+              }
+
             </div>
+          }
+        }
 
-            <div class="dev-diagnostics__entry-actions">
-              <button type="button" igxButton="flat" (click)="copyEntry(entry)">Copy</button>
-              <button type="button" igxButton="flat" (click)="diagnostics.remove(entry.id)">Dismiss</button>
-            </div>
-          </div>
-
-          <p class="dev-diagnostics__message">{{ entry.message }}</p>
-          <details *ngIf="entry.details" class="dev-diagnostics__details-wrap">
-            <summary>Details</summary>
-            <pre class="dev-diagnostics__details">{{ entry.details }}</pre>
-          </details>
-        </article>
-      </div>
-      </ng-container>
-    </section>
+      </section>
+    }
   `,
   styles: [`
     .dev-diagnostics {

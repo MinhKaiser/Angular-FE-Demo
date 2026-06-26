@@ -5,7 +5,6 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-empty-state',
-  standalone: true,
   imports: [CommonModule, IgxCardModule, IgxIconModule],
   template: `
     <igx-card class="empty-state-card">

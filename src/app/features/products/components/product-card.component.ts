@@ -11,7 +11,6 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-product-card',
-  standalone: true,
   imports: [
     CommonModule,
     CurrencyFormatPipe,
@@ -59,10 +58,12 @@ import { IgxIconModule } from 'igniteui-angular/icon';
             <igx-icon igxPrefix>inventory_2</igx-icon>
             {{ product().stock }} in stock
           </igx-chip>
-          <igx-chip *ngIf="product().brand" variant="success">
+        @if (product().brand) {
+          <igx-chip variant="success">
             <igx-icon igxPrefix>branding_watermark</igx-icon>
             {{ product().brand }}
           </igx-chip>
+          }
         </div>
       </igx-card-content>
 

@@ -4,7 +4,6 @@ import { IgxProgressBarModule } from 'igniteui-angular/progressbar';
 
 @Component({
   selector: 'app-loading-state',
-  standalone: true,
   imports: [IgxCardModule, IgxProgressBarModule],
   template: `
     <igx-card class="loading-state">

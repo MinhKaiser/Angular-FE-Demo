@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import {
   EmptyStateComponent,
   LoadingStateComponent,
@@ -13,7 +13,6 @@ import { TodosStore, type TodosStoreInstance } from './state/todos.store';
 
 @Component({
   selector: 'app-todos-list',
-  standalone: true,
   imports: [
     CommonModule,
     TodoFormComponent,
@@ -41,35 +40,41 @@ import { TodosStore, type TodosStoreInstance } from './state/todos.store';
           (addTodo)="store.addTodo($event)"
         />
 
-        <app-status-banner
-          *ngIf="store.errorMessage()"
-          tone="error"
-          icon="error_outline"
-          [message]="store.errorMessage()"
-        />
-
-        <app-loading-state
-          *ngIf="store.isLoading()"
-          title="Loading todos"
-          message="Your task list is syncing before the Ignite UI checklist appears."
-        />
-
-        <div *ngIf="!store.isLoading() && store.todos().length > 0" class="todos-list">
-          <app-todo-item
-            *ngFor="let todo of store.todos(); trackBy: trackByTodoId"
-            [todo]="todo"
-            [isUpdating]="store.isUpdating(todo.id)"
-            (toggle)="store.toggleTodo(todo, $event)"
-            (deleteTodo)="store.deleteTodo(todo)"
+        @if (store.errorMessage()) {
+          <app-status-banner
+            tone="error"
+            icon="error_outline"
+            [message]="store.errorMessage()"
           />
-        </div>
+        }
 
-        <app-empty-state
-          *ngIf="!store.isLoading() && store.todos().length === 0"
-          title="No todos found"
-          description="Create the first task above and it will appear in the checklist."
-          icon="task_alt"
-        />
+        @if (store.isLoading()) {
+          <app-loading-state
+            title="Loading todos"
+            message="Your task list is syncing before the Ignite UI checklist appears."
+          />
+        }
+
+        @if (!store.isLoading() && store.todos().length > 0) {
+          <div class="todos-list">
+            @for (todo of store.todos(); track todo.id) {
+              <app-todo-item
+                [todo]="todo"
+                [isUpdating]="store.isUpdating(todo.id)"
+                (toggle)="store.toggleTodo(todo, $event)"
+                (deleteTodo)="store.deleteTodo(todo)"
+              />
+            }
+          </div>
+        }
+
+        @if (!store.isLoading() && store.todos().length === 0) {
+          <app-empty-state
+            title="No todos found"
+            description="Create the first task above and it will appear in the checklist."
+            icon="task_alt"
+          />
+        }
       </div>
     </section>
   `,
@@ -85,8 +90,12 @@ import { TodosStore, type TodosStoreInstance } from './state/todos.store';
     }
   `],
 })
-export class TodosListComponent {
+export class TodosListComponent implements OnInit {
   protected readonly store: TodosStoreInstance = inject(TodosStore);
+
+  ngOnInit(): void {
+    this.store.loadTodos();
+  }
 
   trackByTodoId(_index: number, todo: Todo): number {
     return todo.id;

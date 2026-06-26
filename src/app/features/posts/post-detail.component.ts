@@ -1,14 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { LoadingStateComponent, PageBackLinkComponent, StatusBannerComponent } from '@shared/components';
 import { PostDetailViewComponent } from './components/post-detail-view.component';
 import { PostDetailStore, type PostDetailStoreInstance } from './state/post-detail.store';
 
 @Component({
   selector: 'app-post-detail',
-  standalone: true,
   imports: [CommonModule, PostDetailViewComponent, PageBackLinkComponent, StatusBannerComponent, LoadingStateComponent],
   providers: [PostDetailStore],
   template: `
@@ -16,24 +15,27 @@ import { PostDetailStore, type PostDetailStoreInstance } from './state/post-deta
       <div class="app-shell app-shell--compact">
         <app-page-back-link to="/posts" label="Back to posts" />
 
-        <app-status-banner
-          *ngIf="store.errorMessage()"
-          tone="error"
-          icon="error_outline"
-          [message]="store.errorMessage()"
-        />
+        @if (store.errorMessage()) {
+          <app-status-banner
+            tone="error"
+            icon="error_outline"
+            [message]="store.errorMessage()"
+          />
+        }
 
-        <app-loading-state
-          *ngIf="store.isLoading()"
-          title="Loading post detail"
-          message="Fetching the article body and comment thread for this story."
-        />
+        @if (store.isLoading()) {
+          <app-loading-state
+            title="Loading post detail"
+            message="Fetching the article body and comment thread for this story."
+          />
+        }
 
-        <app-post-detail-view
-          *ngIf="!store.isLoading() && store.post()"
-          [post]="store.post()"
-          [comments]="store.comments()"
-        />
+        @if (!store.isLoading() && store.post()) {
+          <app-post-detail-view
+            [post]="store.post()"
+            [comments]="store.comments()"
+          />
+        }
       </div>
     </section>
   `,
@@ -44,16 +46,20 @@ import { PostDetailStore, type PostDetailStoreInstance } from './state/post-deta
     }
   `],
 })
-export class PostDetailComponent {
+export class PostDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   protected readonly store: PostDetailStoreInstance = inject(PostDetailStore);
-  private readonly routeParamMap = toSignal(this.route.paramMap, {
-    initialValue: this.route.snapshot.paramMap,
-  });
+  private readonly subscriptions = new Subscription();
 
-  constructor() {
-    effect(() => {
-      this.store.loadPost(Number(this.routeParamMap().get('id')));
-    });
+  ngOnInit(): void {
+    this.subscriptions.add(
+      this.route.paramMap.subscribe(paramMap => {
+        this.store.loadPost(Number(paramMap.get('id')));
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 }

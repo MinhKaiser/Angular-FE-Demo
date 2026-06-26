@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { DevDiagnosticsService } from '@core/services';
-import { getEnvironmentConfig } from '../services/environment.service';
+import { getEnvironmentConfig } from '@core/services/environment.service';
 
 export interface ApiError {
   status: number;

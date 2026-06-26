@@ -11,7 +11,6 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-post-card',
-  standalone: true,
   imports: [
     CommonModule,
     TruncatePipe,
@@ -40,18 +39,23 @@ import { IgxIconModule } from 'igniteui-angular/icon';
           [color]="'#0f8a5f'"
         >
         </igx-avatar>
+
         <div igxCardHeaderTitle>{{ post().title }}</div>
         <div igxCardHeaderSubtitle>User {{ post().userId }}</div>
       </igx-card-header>
 
       <igx-card-content>
         <div class="post-card__tags">
-          <igx-chip *ngFor="let tag of post().tags" variant="success">
-            {{ tag }}
-          </igx-chip>
+          @for (tag of post().tags; track tag) {
+            <igx-chip variant="success">
+              {{ tag }}
+            </igx-chip>
+          }
         </div>
 
-        <p class="post-card__body">{{ post().body | appTruncate: 220 }}</p>
+        <p class="post-card__body">
+          {{ post().body | appTruncate: 220 }}
+        </p>
 
         <div class="post-card__metrics">
           <span><igx-icon>visibility</igx-icon>{{ post().views }}</span>

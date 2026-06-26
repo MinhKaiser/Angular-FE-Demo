@@ -1,23 +1,25 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { IgxBadgeModule } from 'igniteui-angular/badge';
 import { IgxCardModule } from 'igniteui-angular/card';
 import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-dashboard-stat-card',
-  standalone: true,
   imports: [IgxCardModule, IgxBadgeModule, IgxIconModule],
   template: `
     <igx-card class="stat-card">
       <igx-card-content class="stat-card__inner">
+
         <div>
           <p class="stat-card__label">{{ label() }}</p>
           <p class="stat-card__value">{{ value() }}</p>
         </div>
+
         <div class="stat-card__badge-shell" [class]="toneClass()">
           <igx-icon>{{ icon() }}</igx-icon>
           <span igxBadge>{{ code() }}</span>
         </div>
+
       </igx-card-content>
     </igx-card>
   `,
@@ -89,13 +91,13 @@ import { IgxIconModule } from 'igniteui-angular/icon';
   `],
 })
 export class DashboardStatCardComponent {
+
   readonly label = input.required<string>();
   readonly value = input.required<number>();
   readonly code = input.required<string>();
   readonly tone = input<'blue' | 'emerald' | 'violet' | 'amber'>('blue');
   readonly icon = input<string>('insights');
 
-  toneClass(): string {
-    return `tone-${this.tone()}`;
-  }
+  readonly toneClass = computed(() => `tone-${this.tone()}`);
+
 }

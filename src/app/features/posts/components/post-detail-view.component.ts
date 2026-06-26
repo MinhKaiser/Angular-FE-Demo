@@ -8,49 +8,60 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-post-detail-view',
-  standalone: true,
   imports: [CommonModule, IgxAvatarModule, IgxCardModule, IgxChipsModule, IgxIconModule],
   template: `
-    <igx-card *ngIf="post() as item" elevated="true" class="post-detail">
-      <div class="post-detail__tags">
-        <igx-chip *ngFor="let tag of item.tags" variant="success">
-          {{ tag }}
-        </igx-chip>
-      </div>
+    @if (post(); as item) {
+      <igx-card elevated="true" class="post-detail">
+        <div class="post-detail__tags">
+          @for (tag of item.tags; track tag) {
+            <igx-chip variant="success">
+              {{ tag }}
+            </igx-chip>
+          }
+        </div>
 
-      <h1>{{ item.title }}</h1>
-      <p class="post-detail__body">{{ item.body }}</p>
+        <h1>{{ item.title }}</h1>
+        <p class="post-detail__body">{{ item.body }}</p>
 
-      <div class="post-detail__metrics">
-        <span><igx-icon>visibility</igx-icon>{{ item.views }} views</span>
-        <span><igx-icon>thumb_up</igx-icon>{{ item.reactions.likes }} likes</span>
-        <span><igx-icon>thumb_down</igx-icon>{{ item.reactions.dislikes }} dislikes</span>
-        <span><igx-icon>person</igx-icon>User {{ item.userId }}</span>
-      </div>
-    </igx-card>
+        <div class="post-detail__metrics">
+          <span><igx-icon>visibility</igx-icon>{{ item.views }} views</span>
+          <span><igx-icon>thumb_up</igx-icon>{{ item.reactions.likes }} likes</span>
+          <span><igx-icon>thumb_down</igx-icon>{{ item.reactions.dislikes }} dislikes</span>
+          <span><igx-icon>person</igx-icon>User {{ item.userId }}</span>
+        </div>
+      </igx-card>
+    }
 
     <section class="comments">
       <h2>Comments</h2>
-      <div class="comments__list">
-        <igx-card *ngFor="let comment of comments(); trackBy: trackByCommentId" elevated="true" class="comment-card">
-          <div class="comment-card__header">
-            <div class="comment-card__author">
-              <igx-avatar
-                [initials]="comment.user.fullName.slice(0, 2).toUpperCase()"
-                shape="circle"
-                size="small"
-              >
-              </igx-avatar>
-              <p>{{ comment.user.fullName }}</p>
-            </div>
-            <p class="muted">{{ comment.likes }} likes</p>
-          </div>
-          <p class="comment-card__body">{{ comment.body }}</p>
-        </igx-card>
 
-        <div *ngIf="comments().length === 0" class="empty-state">
-          No comments found.
-        </div>
+      <div class="comments__list">
+        @for (comment of comments(); track comment.id) {
+          <igx-card elevated="true" class="comment-card">
+            <div class="comment-card__header">
+              <div class="comment-card__author">
+                <igx-avatar
+                  [initials]="comment.user.fullName.slice(0, 2).toUpperCase()"
+                  shape="circle"
+                  size="small"
+                >
+                </igx-avatar>
+
+                <p>{{ comment.user.fullName }}</p>
+              </div>
+
+              <p class="muted">{{ comment.likes }} likes</p>
+            </div>
+
+            <p class="comment-card__body">{{ comment.body }}</p>
+          </igx-card>
+        }
+
+        @if (comments().length === 0) {
+          <div class="empty-state">
+            No comments found.
+          </div>
+        }
       </div>
     </section>
   `,
@@ -152,8 +163,4 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 export class PostDetailViewComponent {
   readonly post = input.required<Post | null>();
   readonly comments = input.required<readonly Comment[]>();
-
-  trackByCommentId(_index: number, comment: Comment): number {
-    return comment.id;
-  }
 }

@@ -5,7 +5,6 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-page-back-link',
-  standalone: true,
   imports: [RouterLink, IgxButtonDirective, IgxIconModule],
   template: `
     <a [routerLink]="to()" igxButton="flat" class="page-back-link">

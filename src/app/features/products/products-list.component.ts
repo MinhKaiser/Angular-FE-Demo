@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import {
   EmptyStateComponent,
   LoadingStateComponent,
+  PageActionsDirective,
   PageSectionHeaderComponent,
   StatusBannerComponent,
 } from '@shared/components';
@@ -13,7 +14,6 @@ import { ProductsStore, type ProductsStoreInstance } from './state/products.stor
 
 @Component({
   selector: 'app-products-list',
-  standalone: true,
   imports: [
     CommonModule,
     ProductCardComponent,
@@ -22,6 +22,7 @@ import { ProductsStore, type ProductsStoreInstance } from './state/products.stor
     LoadingStateComponent,
     EmptyStateComponent,
     PageSectionHeaderComponent,
+    PageActionsDirective,
   ],
   providers: [ProductsStore],
   template: `
@@ -46,32 +47,38 @@ import { ProductsStore, type ProductsStoreInstance } from './state/products.stor
           />
         </app-page-section-header>
 
-        <app-status-banner
-          *ngIf="store.errorMessage()"
-          tone="error"
-          icon="error_outline"
-          [message]="store.errorMessage()"
-        />
-
-        <app-loading-state
-          *ngIf="store.isLoading()"
-          title="Loading products"
-          message="Ignite UI catalog cards are being filled with the latest API results."
-        />
-
-        <div *ngIf="!store.isLoading() && store.products().length > 0" class="products-grid">
-          <app-product-card
-            *ngFor="let product of store.products(); trackBy: trackByProductId"
-            [product]="product"
+        @if (store.errorMessage()) {
+          <app-status-banner
+            tone="error"
+            icon="error_outline"
+            [message]="store.errorMessage()"
           />
-        </div>
+        }
 
-        <app-empty-state
-          *ngIf="!store.isLoading() && store.products().length === 0"
-          title="No products found"
-          description="Try another keyword or category to widen the catalog results."
-          icon="inventory_2"
-        />
+        @if (store.isLoading()) {
+          <app-loading-state
+            title="Loading products"
+            message="Ignite UI catalog cards are being filled with the latest API results."
+          />
+        }
+
+        @if (!store.isLoading() && store.products().length > 0) {
+          <div class="products-grid">
+            @for (product of store.products(); track product.id) {
+              <app-product-card
+                [product]="product"
+              />
+            }
+          </div>
+        }
+
+        @if (!store.isLoading() && store.products().length === 0) {
+          <app-empty-state
+            title="No products found"
+            description="Try another keyword or category to widen the catalog results."
+            icon="inventory_2"
+          />
+        }
       </div>
     </section>
   `,
@@ -88,8 +95,12 @@ import { ProductsStore, type ProductsStoreInstance } from './state/products.stor
     }
   `],
 })
-export class ProductsListComponent {
+export class ProductsListComponent implements OnInit {
   protected readonly store: ProductsStoreInstance = inject(ProductsStore);
+
+  ngOnInit(): void {
+    this.store.loadInitialData();
+  }
 
   trackByProductId(_index: number, product: Product): number {
     return product.id;

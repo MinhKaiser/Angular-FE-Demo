@@ -7,7 +7,6 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-todo-item',
-  standalone: true,
   imports: [CommonModule, IgxButtonDirective, IgxCheckboxModule, IgxIconModule],
   template: `
     <article class="todo-item card">

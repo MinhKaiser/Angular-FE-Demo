@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { catchError, finalize, of } from 'rxjs';
 import { ProductService } from '@core/services';
 import { Product, ProductsResponse } from '@shared/models';
@@ -99,11 +99,6 @@ export const ProductsStore = signalStore(
         loadProducts();
       },
     };
-  }),
-  withHooks({
-    onInit(store) {
-      store.loadInitialData();
-    },
   })
 );
 

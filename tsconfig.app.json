@@ -12,7 +12,9 @@
       "@shared": ["./src/app/shared"],
       "@shared/*": ["./src/app/shared/*"],
       "@features": ["./src/app/features"],
-      "@features/*": ["./src/app/features/*"]
+      "@features/*": ["./src/app/features/*"],
+      "@env/": ["./src/environments/"],
+      "@env/*": ["./src/environments/*"]
     }
   },
   "include": [

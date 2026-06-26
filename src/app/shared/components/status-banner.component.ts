@@ -5,7 +5,6 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
 @Component({
   selector: 'app-status-banner',
-  standalone: true,
   imports: [CommonModule, IgxCardModule, IgxIconModule],
   template: `
     <igx-card class="status-banner" [class]="'status-banner status-banner--' + tone()">
