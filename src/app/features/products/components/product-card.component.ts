@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Product } from '@shared/models';
 import { CurrencyFormatPipe } from '@shared/pipes';
 import { IgxBadgeModule } from 'igniteui-angular/badge';
@@ -13,6 +13,7 @@ import { IgxIconModule } from 'igniteui-angular/icon';
   selector: 'app-product-card',
   imports: [
     CommonModule,
+    RouterLink,
     CurrencyFormatPipe,
     IgxBadgeModule,
     IgxCardModule,
@@ -26,12 +27,16 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       class="product-card"
       tabindex="0"
       role="link"
-      (click)="openDetails()"
-      (keydown.enter)="openDetails()"
-      (keydown.space)="openDetails($event)"
+      [routerLink]="detailsLink()"
+      (keydown.space)="onSpaceKeydown($event)"
     >
       <igx-card-media class="product-card__media">
-        <button type="button" class="product-card__image-link" (click)="openDetails($event)">
+        <button
+          type="button"
+          class="product-card__image-link"
+          [routerLink]="detailsLink()"
+          (click)="$event.stopPropagation()"
+        >
           <img
             [src]="product().thumbnail"
             [alt]="product().title"
@@ -72,7 +77,8 @@ import { IgxIconModule } from 'igniteui-angular/icon';
           type="button"
           igxButton="contained"
           class="product-card__link"
-          (click)="openDetails($event)"
+          [routerLink]="detailsLink()"
+          (click)="$event.stopPropagation()"
         >
           <igx-icon>arrow_forward</igx-icon>
           View details
@@ -149,13 +155,11 @@ import { IgxIconModule } from 'igniteui-angular/icon';
   `],
 })
 export class ProductCardComponent {
-  private readonly router = inject(Router);
-
   readonly product = input.required<Product>();
+  readonly detailsLink = computed(() => ['/products', this.product().id]);
 
-  openDetails(event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-    this.router.navigate(['/products', this.product().id]);
+  onSpaceKeydown(event: KeyboardEvent): void {
+    event.preventDefault();
+    (event.currentTarget as HTMLElement | null)?.click();
   }
 }

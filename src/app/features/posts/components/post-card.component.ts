@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Post } from '@shared/models';
 import { TruncatePipe } from '@shared/pipes';
 import { IgxAvatarModule } from 'igniteui-angular/avatar';
@@ -13,6 +13,7 @@ import { IgxIconModule } from 'igniteui-angular/icon';
   selector: 'app-post-card',
   imports: [
     CommonModule,
+    RouterLink,
     TruncatePipe,
     IgxAvatarModule,
     IgxCardModule,
@@ -26,9 +27,8 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       class="post-card"
       tabindex="0"
       role="link"
-      (click)="openDetails()"
-      (keydown.enter)="openDetails()"
-      (keydown.space)="openDetails($event)"
+      [routerLink]="detailsLink()"
+      (keydown.space)="onSpaceKeydown($event)"
     >
       <igx-card-header>
         <igx-avatar
@@ -69,7 +69,8 @@ import { IgxIconModule } from 'igniteui-angular/icon';
           type="button"
           igxButton="contained"
           class="post-card__link"
-          (click)="openDetails($event)"
+          [routerLink]="detailsLink()"
+          (click)="$event.stopPropagation()"
         >
           <igx-icon>article</igx-icon>
           Read more
@@ -122,13 +123,11 @@ import { IgxIconModule } from 'igniteui-angular/icon';
   `],
 })
 export class PostCardComponent {
-  private readonly router = inject(Router);
-
   readonly post = input.required<Post>();
+  readonly detailsLink = computed(() => ['/posts', this.post().id]);
 
-  openDetails(event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-    this.router.navigate(['/posts', this.post().id]);
+  onSpaceKeydown(event: KeyboardEvent): void {
+    event.preventDefault();
+    (event.currentTarget as HTMLElement | null)?.click();
   }
 }
