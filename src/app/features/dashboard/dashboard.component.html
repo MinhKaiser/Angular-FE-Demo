@@ -256,24 +256,26 @@
       }
 
       @if (!store.isLoading()) {
-        <igx-grid
-          class="dashboard-grid"
-          width="100%"
-          height="430px"
-          [data]="filteredProducts()"
-          [primaryKey]="'id'"
-          [allowFiltering]="true"
-          [filterMode]="'quickFilter'"
-          [moving]="true"
-          [rowSelection]="'multiple'"
-        >
-          <igx-column field="title" header="Product" [sortable]="true"></igx-column>
-          <igx-column field="category" header="Category" [sortable]="true"></igx-column>
-          <igx-column field="brand" header="Brand" [sortable]="true"></igx-column>
-          <igx-column field="price" header="Price" [sortable]="true"></igx-column>
-          <igx-column field="rating" header="Rating" [sortable]="true"></igx-column>
-          <igx-column field="stock" header="Stock" [sortable]="true"></igx-column>
-        </igx-grid>
+        <div class="dashboard-grid-shell">
+          <igx-grid
+            class="dashboard-grid"
+            width="100%"
+            height="430px"
+            [data]="filteredProducts()"
+            [primaryKey]="'id'"
+            [allowFiltering]="true"
+            [filterMode]="'quickFilter'"
+            [moving]="true"
+            [rowSelection]="'multiple'"
+          >
+            <igx-column field="title" header="Product" [sortable]="true"></igx-column>
+            <igx-column field="category" header="Category" [sortable]="true"></igx-column>
+            <igx-column field="brand" header="Brand" [sortable]="true"></igx-column>
+            <igx-column field="price" header="Price" [sortable]="true"></igx-column>
+            <igx-column field="rating" header="Rating" [sortable]="true"></igx-column>
+            <igx-column field="stock" header="Stock" [sortable]="true"></igx-column>
+          </igx-grid>
+        </div>
       }
     </article>
 

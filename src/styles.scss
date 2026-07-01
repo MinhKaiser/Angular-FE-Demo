@@ -70,6 +70,8 @@
   --app-danger-bg: #fff1f0;
   --app-radius: 8px;
   --app-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+  --app-shell-gutter: clamp(1rem, 3vw, 1.5rem);
+  --app-section-gap: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 html,
@@ -146,17 +148,17 @@ app-root {
 }
 
 .app-shell {
-  width: min(100% - 2rem, 1120px);
+  width: min(100% - (var(--app-shell-gutter) * 2), 1120px);
   margin-inline: auto;
-  padding-block: 2.5rem;
+  padding-block: var(--app-section-gap);
 }
 
 .app-shell--narrow {
-  width: min(100% - 2rem, 896px);
+  width: min(100% - (var(--app-shell-gutter) * 2), 896px);
 }
 
 .app-shell--compact {
-  width: min(100% - 2rem, 768px);
+  width: min(100% - (var(--app-shell-gutter) * 2), 768px);
 }
 
 .page-heading {
@@ -183,6 +185,7 @@ app-root {
 .muted {
   color: var(--app-text-muted);
   font-size: 0.93rem;
+  line-height: 1.65;
 }
 
 .content-header {
@@ -334,6 +337,18 @@ app-root {
 }
 
 @media (max-width: 760px) {
+  .app-page {
+    min-height: auto;
+  }
+
+  .page-heading {
+    margin-bottom: 1.5rem;
+  }
+
+  .page-heading h1 {
+    font-size: clamp(1.8rem, 9vw, 2.3rem);
+  }
+
   .content-header {
     display: block;
   }

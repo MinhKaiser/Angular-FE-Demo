@@ -47,6 +47,7 @@ import { Router } from '@angular/router';
       display: inline-flex;
       gap: 0.5rem;
       align-items: center;
+      justify-content: center;
     }
 
     .todo-form__hint {
@@ -63,6 +64,10 @@ import { Router } from '@angular/router';
 
       .todo-form__hint {
         grid-column: auto;
+      }
+
+      .todo-form__button {
+        width: 100%;
       }
     }
   `],

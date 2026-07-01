@@ -25,6 +25,7 @@ import { DevDiagnosticsComponent, HeaderComponent, FooterComponent } from '@shar
 
     .app-main {
       flex: 1;
+      min-width: 0;
     }
   `],
 })

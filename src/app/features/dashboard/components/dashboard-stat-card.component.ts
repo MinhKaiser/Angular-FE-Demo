@@ -88,6 +88,22 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       color: var(--app-warning);
       background: #fff7e8;
     }
+
+    @media (max-width: 560px) {
+      .stat-card__inner {
+        padding: 1rem;
+      }
+
+      .stat-card__value {
+        font-size: 1.65rem;
+      }
+
+      .stat-card__badge-shell {
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 16px;
+      }
+    }
   `],
 })
 export class DashboardStatCardComponent {

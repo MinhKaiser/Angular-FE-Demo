@@ -88,10 +88,11 @@ import { IgxSelectModule } from 'igniteui-angular/select';
 
     @media (max-width: 1040px) {
       .filter-bar {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .filter-action {
+        grid-column: 1 / -1;
         width: 100%;
       }
     }
@@ -99,6 +100,10 @@ import { IgxSelectModule } from 'igniteui-angular/select';
     @media (max-width: 760px) {
       .filter-bar {
         grid-template-columns: 1fr;
+      }
+
+      .filter-action {
+        grid-column: auto;
       }
     }
   `],

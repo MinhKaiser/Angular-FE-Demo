@@ -64,6 +64,19 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       padding: 0.35rem 0.75rem;
       font-size: 0.78rem;
     }
+
+    @media (max-width: 560px) {
+      .todo-item {
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: start;
+      }
+
+      .todo-item__delete {
+        grid-column: 1 / -1;
+        width: 100%;
+        justify-content: center;
+      }
+    }
   `],
 })
 export class TodoItemComponent {

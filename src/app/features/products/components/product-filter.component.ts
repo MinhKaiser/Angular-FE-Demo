@@ -87,10 +87,11 @@ import { ProductCategoryOption } from '@features/products/state/products.store';
 
     @media (max-width: 1040px) {
       .filter-bar {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .filter-action {
+        grid-column: 1 / -1;
         width: 100%;
       }
     }
@@ -98,6 +99,10 @@ import { ProductCategoryOption } from '@features/products/state/products.store';
     @media (max-width: 760px) {
       .filter-bar {
         grid-template-columns: 1fr;
+      }
+
+      .filter-action {
+        grid-column: auto;
       }
     }
   `],

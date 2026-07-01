@@ -135,6 +135,27 @@ import { PageActionsDirective } from './page-actions.directive';
         justify-self: stretch;
       }
     }
+
+    @media (max-width: 640px) {
+      .page-section-header__content {
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .page-section-header__copy {
+        gap: 0.85rem;
+      }
+
+      .page-section-header__icon {
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 14px;
+      }
+
+      .page-section-header__text h1 {
+        font-size: clamp(1.6rem, 8vw, 2rem);
+      }
+    }
   `],
 })
 export class PageSectionHeaderComponent implements AfterContentInit, AfterContentChecked {

@@ -29,7 +29,7 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
     .site-footer__inner {
       display: flex;
-      width: min(100% - 2rem, 1120px);
+      width: min(100% - (var(--app-shell-gutter) * 2), 1120px);
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
@@ -65,6 +65,10 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       .site-footer__inner {
         align-items: flex-start;
         flex-direction: column;
+      }
+
+      .site-footer__links {
+        flex-wrap: wrap;
       }
     }
   `],

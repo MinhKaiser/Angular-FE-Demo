@@ -116,6 +116,11 @@ import { IgxIconModule } from 'igniteui-angular/icon';
     }
 
     @media (max-width: 640px) {
+      .post-card__link {
+        width: 100%;
+        justify-content: center;
+      }
+
       .post-card__metrics {
         display: grid;
       }

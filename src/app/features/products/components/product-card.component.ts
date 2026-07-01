@@ -152,6 +152,17 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       gap: 0.45rem;
       align-items: center;
     }
+
+    @media (max-width: 640px) {
+      .product-card__description {
+        min-height: 0;
+      }
+
+      .product-card__link {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   `],
 })
 export class ProductCardComponent {

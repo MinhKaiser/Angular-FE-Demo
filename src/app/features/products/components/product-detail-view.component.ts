@@ -235,10 +235,21 @@ import { IgxProgressBarModule } from 'igniteui-angular/progressbar';
     @media (max-width: 900px) {
       .product-detail {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .product-detail__summary {
+        min-width: 0;
       }
     }
 
     @media (max-width: 560px) {
+      .product-detail__meta,
+      .product-detail__stock-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
       .product-detail__facts {
         grid-template-columns: 1fr;
       }

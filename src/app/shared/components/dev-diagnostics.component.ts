@@ -175,7 +175,7 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       display: grid;
       justify-items: end;
       gap: 0.75rem;
-      width: min(100% - 2rem, 48rem);
+      width: min(100% - (var(--app-shell-gutter) * 2), 48rem);
     }
 
     .dev-diagnostics__launcher,
@@ -336,7 +336,8 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
     @media (max-width: 720px) {
       .dev-diagnostics {
-        left: 1rem;
+        right: var(--app-shell-gutter);
+        left: var(--app-shell-gutter);
         width: auto;
       }
 
@@ -344,9 +345,32 @@ import { IgxIconModule } from 'igniteui-angular/icon';
         max-height: 65vh;
       }
 
+      .dev-diagnostics__launcher,
+      .dev-diagnostics__toggle {
+        width: 100%;
+        justify-content: center;
+      }
+
       .dev-diagnostics__header,
       .dev-diagnostics__entry-top {
         display: grid;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .dev-diagnostics {
+        bottom: 0.75rem;
+        gap: 0.5rem;
+      }
+
+      .dev-diagnostics__panel {
+        max-height: min(68vh, calc(100dvh - 5.5rem));
+        padding: 0.85rem;
+      }
+
+      .dev-diagnostics__actions,
+      .dev-diagnostics__entry-actions {
+        width: 100%;
       }
     }
   `],

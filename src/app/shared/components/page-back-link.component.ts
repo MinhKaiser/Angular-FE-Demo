@@ -23,6 +23,13 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       font-weight: 700;
       text-decoration: none;
     }
+
+    @media (max-width: 560px) {
+      .page-back-link {
+        min-height: 2.5rem;
+        white-space: normal;
+      }
+    }
   `],
 })
 export class PageBackLinkComponent {

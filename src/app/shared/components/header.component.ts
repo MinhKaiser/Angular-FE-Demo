@@ -76,7 +76,7 @@ import { IgxIconModule } from 'igniteui-angular/icon';
 
     .site-header__nav {
       display: flex;
-      width: min(100% - 2rem, 1120px);
+      width: min(100% - (var(--app-shell-gutter) * 2), 1120px);
       align-items: center;
       justify-content: space-between;
       gap: 1.5rem;
@@ -168,16 +168,55 @@ import { IgxIconModule } from 'igniteui-angular/icon';
     @media (max-width: 760px) {
       .site-header__nav {
         gap: 1rem;
+        padding-block: 0.75rem;
       }
 
       .site-header__links {
         width: 100%;
-        gap: 0.85rem 1rem;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
         order: 3;
+      }
+
+      .site-header__link,
+      .outline-button,
+      .site-header__sign-in {
+        justify-content: center;
+      }
+
+      .site-header__link {
+        min-height: 2.75rem;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid var(--app-border-soft);
+        border-radius: 999px;
+        background: rgb(255 255 255 / 88%);
+      }
+
+      .site-header__actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .site-header__user {
         display: none;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .brand {
+        min-width: 0;
+      }
+
+      .brand__name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .site-header__links,
+      .site-header__actions {
+        grid-template-columns: 1fr;
       }
     }
   `],

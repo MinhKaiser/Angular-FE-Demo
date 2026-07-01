@@ -59,6 +59,17 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       color: var(--app-text-muted);
       line-height: 1.6;
     }
+
+    @media (max-width: 560px) {
+      .empty-state-card__content {
+        padding: 1.25rem 1rem;
+      }
+
+      .empty-state-card__icon {
+        width: 2.6rem;
+        height: 2.6rem;
+      }
+    }
   `],
 })
 export class EmptyStateComponent {

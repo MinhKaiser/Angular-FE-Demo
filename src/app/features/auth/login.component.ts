@@ -195,6 +195,16 @@ import { IgxInputGroupModule } from 'igniteui-angular/input-group';
       color: var(--app-text);
       font-weight: 800;
     }
+
+    @media (max-width: 560px) {
+      .login-page {
+        padding: 1rem;
+      }
+
+      .login-card {
+        padding: 1.25rem;
+      }
+    }
   `],
 })
 export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {

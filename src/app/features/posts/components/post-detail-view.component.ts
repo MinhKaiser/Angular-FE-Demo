@@ -153,6 +153,10 @@ import { IgxIconModule } from 'igniteui-angular/icon';
         padding: 1.25rem;
       }
 
+      .post-detail__metrics {
+        display: grid;
+      }
+
       .comment-card__header {
         align-items: flex-start;
         flex-direction: column;
