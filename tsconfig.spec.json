@@ -5,20 +5,7 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./out-tsc/spec",
-    "types": [
-      "vitest/globals"
-    ],
-    "paths": {
-      "@core": ["./src/app/core"],
-      "@core/*": ["./src/app/core/*"],
-      "@shared": ["./src/app/shared"],
-      "@shared/*": ["./src/app/shared/*"],
-      "@features": ["./src/app/features"],
-      "@features/*": ["./src/app/features/*"]
-    }
+    "types": ["vitest/globals"]
   },
-  "include": [
-    "src/**/*.d.ts",
-    "src/**/*.spec.ts"
-  ]
+  "include": ["src/**/*.d.ts", "src/**/*.spec.ts"]
 }

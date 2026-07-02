@@ -45,11 +45,16 @@ import { PostsStore, type PostsStoreInstance } from './state/posts.store';
         </app-page-section-header>
 
         @if (store.errorMessage()) {
-          <app-status-banner
-            tone="error"
-            icon="error_outline"
-            [message]="store.errorMessage()"
-          />
+          <app-status-banner tone="error" icon="error_outline" [message]="store.errorMessage()">
+            <button
+              type="button"
+              class="outline-button"
+              (click)="store.reload()"
+              [disabled]="store.isLoading()"
+            >
+              Try again
+            </button>
+          </app-status-banner>
         }
 
         @if (store.isLoading()) {
@@ -62,14 +67,12 @@ import { PostsStore, type PostsStoreInstance } from './state/posts.store';
         @if (!store.isLoading() && store.posts().length > 0) {
           <div class="post-list">
             @for (post of store.posts(); track post.id) {
-              <app-post-card
-                [post]="post"
-              />
+              <app-post-card [post]="post" />
             }
           </div>
         }
 
-        @if (!store.isLoading() && store.posts().length === 0) {
+        @if (!store.isLoading() && !store.errorMessage() && store.posts().length === 0) {
           <app-empty-state
             title="No posts found"
             description="Try another keyword or tag to bring more stories into the feed."
@@ -79,17 +82,19 @@ import { PostsStore, type PostsStoreInstance } from './state/posts.store';
       </div>
     </section>
   `,
-  styles: [`
-    .posts-page {
-      --section-color: var(--app-success);
-      --section-color-dark: var(--app-success-dark);
-    }
+  styles: [
+    `
+      .posts-page {
+        --section-color: var(--app-success);
+        --section-color-dark: var(--app-success-dark);
+      }
 
-    .post-list {
-      display: grid;
-      gap: 1rem;
-    }
-  `],
+      .post-list {
+        display: grid;
+        gap: 1rem;
+      }
+    `,
+  ],
 })
 export class PostsListComponent implements OnInit {
   protected readonly store: PostsStoreInstance = inject(PostsStore);

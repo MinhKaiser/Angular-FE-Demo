@@ -13,15 +13,12 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       <igx-checkbox
         [checked]="todo().completed"
         [disabled]="isUpdating()"
-        (click)="toggle.emit(!todo().completed)"
+        (change)="toggle.emit($event.checked)"
         class="todo-item__checkbox"
       >
       </igx-checkbox>
 
-      <span
-        class="todo-item__text"
-        [class.todo-item__text--done]="todo().completed"
-      >
+      <span class="todo-item__text" [class.todo-item__text--done]="todo().completed">
         {{ todo().todo }}
       </span>
 
@@ -37,47 +34,49 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       </button>
     </article>
   `,
-  styles: [`
-    .todo-item {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-    }
-
-    .todo-item__text {
-      color: var(--app-text);
-      font-size: 0.94rem;
-    }
-
-    .todo-item__text--done {
-      color: #94a3b8;
-      text-decoration: line-through;
-    }
-
-    .todo-item__delete {
-      display: inline-flex;
-      gap: 0.35rem;
-      align-items: center;
-      min-height: 2rem;
-      padding: 0.35rem 0.75rem;
-      font-size: 0.78rem;
-    }
-
-    @media (max-width: 560px) {
+  styles: [
+    `
       .todo-item {
-        grid-template-columns: auto minmax(0, 1fr);
-        align-items: start;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .todo-item__text {
+        color: var(--app-text);
+        font-size: 0.94rem;
+      }
+
+      .todo-item__text--done {
+        color: #94a3b8;
+        text-decoration: line-through;
       }
 
       .todo-item__delete {
-        grid-column: 1 / -1;
-        width: 100%;
-        justify-content: center;
+        display: inline-flex;
+        gap: 0.35rem;
+        align-items: center;
+        min-height: 2rem;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.78rem;
       }
-    }
-  `],
+
+      @media (max-width: 560px) {
+        .todo-item {
+          grid-template-columns: auto minmax(0, 1fr);
+          align-items: start;
+        }
+
+        .todo-item__delete {
+          grid-column: 1 / -1;
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    `,
+  ],
 })
 export class TodoItemComponent {
   readonly todo = input.required<Todo>();

@@ -9,11 +9,7 @@ describe('ProductService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        ProductService,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [ProductService, provideHttpClient(), provideHttpClientTesting()],
     });
 
     service = TestBed.inject(ProductService);
@@ -25,13 +21,15 @@ describe('ProductService', () => {
   });
 
   it('requests products with DummyJSON pagination params', () => {
-    service.getProducts({
-      limit: 0,
-      skip: 0,
-      select: ['title', 'price'],
-    }).subscribe();
+    service
+      .getProducts({
+        limit: 0,
+        skip: 0,
+        select: ['title', 'price'],
+      })
+      .subscribe();
 
-    const request = httpMock.expectOne(req => req.url === 'https://dummyjson.com/products');
+    const request = httpMock.expectOne((req) => req.url === 'https://dummyjson.com/products');
 
     expect(request.request.method).toBe('GET');
     expect(request.request.params.get('limit')).toBe('0');
@@ -44,7 +42,9 @@ describe('ProductService', () => {
   it('searches products with the documented q query param', () => {
     service.searchProducts(' phone ', { limit: 10, skip: 0 }).subscribe();
 
-    const request = httpMock.expectOne(req => req.url === 'https://dummyjson.com/products/search');
+    const request = httpMock.expectOne(
+      (req) => req.url === 'https://dummyjson.com/products/search',
+    );
 
     expect(request.request.method).toBe('GET');
     expect(request.request.params.get('q')).toBe('phone');

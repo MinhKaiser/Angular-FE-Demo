@@ -5,11 +5,19 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:production": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:ci": "ng test",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\" \"*.{json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\" \"*.{json,md}\""
   },
   "private": true,
   "packageManager": "npm@10.9.8",
+  "engines": {
+    "node": "^20.19.0 || ^22.12.0 || >=24.0.0"
+  },
   "dependencies": {
     "@angular/common": "^21.2.0",
     "@angular/compiler": "^21.2.0",

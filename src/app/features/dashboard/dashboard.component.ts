@@ -76,8 +76,12 @@ export class DashboardComponent implements OnInit {
   protected readonly stockThreshold = signal<number>(25);
 
   protected readonly filteredProducts = computed(() =>
-    this.store.featuredProducts()
-      .filter((product: Product) => this.selectedCategory() === 'all' || product.category === this.selectedCategory())
+    this.store
+      .featuredProducts()
+      .filter(
+        (product: Product) =>
+          this.selectedCategory() === 'all' || product.category === this.selectedCategory(),
+      )
       .filter((product: Product) => product.stock >= this.stockThreshold())
       .map((product: Product) => ({
         id: product.id,
@@ -87,7 +91,7 @@ export class DashboardComponent implements OnInit {
         price: Number(product.price.toFixed(2)),
         rating: Number(product.rating.toFixed(1)),
         stock: product.stock,
-      }))
+      })),
   );
 
   protected readonly maxStatValue = computed(() => {
@@ -107,12 +111,15 @@ export class DashboardComponent implements OnInit {
       return 0;
     }
 
-    const averageStock = items.reduce((sum: number, item: Product) => sum + item.stock, 0) / items.length;
+    const averageStock =
+      items.reduce((sum: number, item: Product) => sum + item.stock, 0) / items.length;
     return Math.min(100, Math.round(averageStock));
   });
 
   protected activeModeLabel(): string {
-    return this.workspaceModes.find(mode => mode.id === this.workspaceMode())?.label ?? 'Overview';
+    return (
+      this.workspaceModes.find((mode) => mode.id === this.workspaceMode())?.label ?? 'Overview'
+    );
   }
 
   ngOnInit(): void {

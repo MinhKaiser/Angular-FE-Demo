@@ -6,7 +6,7 @@ import { IgxProgressBarModule } from 'igniteui-angular/progressbar';
   selector: 'app-loading-state',
   imports: [IgxCardModule, IgxProgressBarModule],
   template: `
-    <igx-card class="loading-state">
+    <igx-card class="loading-state" role="status" aria-live="polite">
       <igx-card-content class="loading-state__content">
         <strong>{{ title() }}</strong>
         <p>{{ message() }}</p>
@@ -14,31 +14,33 @@ import { IgxProgressBarModule } from 'igniteui-angular/progressbar';
       </igx-card-content>
     </igx-card>
   `,
-  styles: [`
-    .loading-state {
-      margin: 1rem 0;
-      border-radius: 18px;
-      box-shadow: none;
-      border: 1px solid #dbeafe;
-      background: linear-gradient(135deg, #fff 0%, #f8fbff 100%);
-    }
+  styles: [
+    `
+      .loading-state {
+        margin: 1rem 0;
+        border-radius: 18px;
+        box-shadow: none;
+        border: 1px solid #dbeafe;
+        background: linear-gradient(135deg, #fff 0%, #f8fbff 100%);
+      }
 
-    .loading-state__content {
-      display: grid;
-      gap: 0.75rem;
-      padding: 1.1rem 1.2rem;
-    }
+      .loading-state__content {
+        display: grid;
+        gap: 0.75rem;
+        padding: 1.1rem 1.2rem;
+      }
 
-    .loading-state__content strong,
-    .loading-state__content p {
-      margin: 0;
-    }
+      .loading-state__content strong,
+      .loading-state__content p {
+        margin: 0;
+      }
 
-    .loading-state__content p {
-      color: var(--app-text-muted);
-      line-height: 1.6;
-    }
-  `],
+      .loading-state__content p {
+        color: var(--app-text-muted);
+        line-height: 1.6;
+      }
+    `,
+  ],
 })
 export class LoadingStateComponent {
   readonly title = input<string>('Loading data');

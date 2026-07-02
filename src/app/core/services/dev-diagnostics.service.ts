@@ -82,7 +82,7 @@ export class DevDiagnosticsService implements OnDestroy {
     const level = this.levelFilter();
     const term = this.searchTerm().trim().toLowerCase();
 
-    return this.entries().filter(entry => {
+    return this.entries().filter((entry) => {
       const matchesSource = source === 'all' || entry.source === source;
       const matchesLevel = level === 'all' || entry.level === level;
       const haystack = `${entry.message}\n${entry.details ?? ''}\n${entry.route}`.toLowerCase();
@@ -92,7 +92,7 @@ export class DevDiagnosticsService implements OnDestroy {
   });
 
   readonly errorCount = computed(() =>
-    this.entries().reduce((total, entry) => total + entry.count, 0)
+    this.entries().reduce((total, entry) => total + entry.count, 0),
   );
 
   readonly activeSummary = computed(() => ({
@@ -160,12 +160,12 @@ export class DevDiagnosticsService implements OnDestroy {
   }
 
   toggle(): void {
-    this.isExpanded.update(value => !value);
+    this.isExpanded.update((value) => !value);
     this.saveState();
   }
 
   remove(entryId: number): void {
-    this.entries.update(entries => entries.filter(entry => entry.id !== entryId));
+    this.entries.update((entries) => entries.filter((entry) => entry.id !== entryId));
     this.saveState();
   }
 
@@ -182,17 +182,17 @@ export class DevDiagnosticsService implements OnDestroy {
   }
 
   togglePersistLogs(): void {
-    this.persistLogs.update(value => !value);
+    this.persistLogs.update((value) => !value);
     this.saveState();
   }
 
   toggleAutoClearOnNavigation(): void {
-    this.autoClearOnNavigation.update(value => !value);
+    this.autoClearOnNavigation.update((value) => !value);
     this.saveState();
   }
 
   async copyEntry(entryId: number): Promise<boolean> {
-    const entry = this.entries().find(item => item.id === entryId);
+    const entry = this.entries().find((item) => item.id === entryId);
     if (!entry) {
       return false;
     }
@@ -205,7 +205,9 @@ export class DevDiagnosticsService implements OnDestroy {
       return false;
     }
 
-    const text = this.filteredEntries().map(entry => this.formatEntry(entry)).join('\n\n');
+    const text = this.filteredEntries()
+      .map((entry) => this.formatEntry(entry))
+      .join('\n\n');
     return this.copyText(text);
   }
 
@@ -261,7 +263,7 @@ export class DevDiagnosticsService implements OnDestroy {
             details: event.reason,
           });
         }
-      })
+      }),
     );
   }
 
@@ -273,20 +275,26 @@ export class DevDiagnosticsService implements OnDestroy {
     const route = this.router.url || '/';
     const timestamp = new Date().toLocaleTimeString();
 
-    this.entries.update(entries => {
-      const existing = entries.find(entry =>
-        entry.source === input.source &&
-        entry.level === input.level &&
-        entry.message === input.message &&
-        entry.route === route
+    this.entries.update((entries) => {
+      const existing = entries.find(
+        (entry) =>
+          entry.source === input.source &&
+          entry.level === input.level &&
+          entry.message === input.message &&
+          entry.route === route,
       );
 
       if (existing) {
-        return entries.map(entry =>
-          entry.id === existing.id
-            ? { ...entry, count: entry.count + 1, timestamp, details: input.details ?? entry.details }
-            : entry
-        );
+        return entries.map((entry) => {
+          if (entry.id !== existing.id) {
+            return entry;
+          }
+
+          const updatedEntry = { ...entry, count: entry.count + 1, timestamp };
+          return input.details === undefined
+            ? updatedEntry
+            : { ...updatedEntry, details: input.details };
+        });
       }
 
       const entry: DiagnosticEntry = {
@@ -374,7 +382,9 @@ export class DevDiagnosticsService implements OnDestroy {
       `[${entry.timestamp}] ${entry.source.toUpperCase()} ${entry.route} x${entry.count}`,
       entry.message,
       entry.details ?? '',
-    ].filter(Boolean).join('\n');
+    ]
+      .filter(Boolean)
+      .join('\n');
   }
 
   private getErrorMessage(error: unknown): string {

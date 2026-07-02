@@ -22,14 +22,7 @@ import { IgxIconModule } from 'igniteui-angular/icon';
     IgxIconModule,
   ],
   template: `
-    <igx-card
-      elevated="true"
-      class="post-card"
-      tabindex="0"
-      role="link"
-      [routerLink]="detailsLink()"
-      (keydown.space)="onSpaceKeydown($event)"
-    >
+    <igx-card elevated="true" class="post-card">
       <igx-card-header>
         <igx-avatar
           initials="PO"
@@ -65,74 +58,65 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       </igx-card-content>
 
       <igx-card-actions>
-        <button
-          type="button"
-          igxButton="contained"
-          class="post-card__link"
-          [routerLink]="detailsLink()"
-          (click)="$event.stopPropagation()"
-        >
+        <a igxButton="contained" class="post-card__link" [routerLink]="detailsLink()">
           <igx-icon>article</igx-icon>
           Read more
-        </button>
+        </a>
       </igx-card-actions>
     </igx-card>
   `,
-  styles: [`
-    .post-card {
-      cursor: pointer;
-      transition: box-shadow 0.16s ease;
-    }
+  styles: [
+    `
+      .post-card {
+        cursor: pointer;
+        transition: box-shadow 0.16s ease;
+      }
 
-    .post-card:hover {
-      box-shadow: 0 10px 24px rgb(15 23 42 / 10%);
-    }
+      .post-card:hover {
+        box-shadow: 0 10px 24px rgb(15 23 42 / 10%);
+      }
 
-    .post-card__tags,
-    .post-card__metrics {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
+      .post-card__tags,
+      .post-card__metrics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
 
-    .post-card__body {
-      margin: 1rem 0 0;
-      color: var(--app-text-muted);
-      font-size: 0.94rem;
-      line-height: 1.65;
-    }
-
-    .post-card__metrics {
-      margin-top: 1.25rem;
-      color: var(--app-text-muted);
-      font-size: 0.9rem;
-    }
-
-    .post-card__metrics span,
-    .post-card__link {
-      display: inline-flex;
-      gap: 0.35rem;
-      align-items: center;
-    }
-
-    @media (max-width: 640px) {
-      .post-card__link {
-        width: 100%;
-        justify-content: center;
+      .post-card__body {
+        margin: 1rem 0 0;
+        color: var(--app-text-muted);
+        font-size: 0.94rem;
+        line-height: 1.65;
       }
 
       .post-card__metrics {
-        display: grid;
+        margin-top: 1.25rem;
+        color: var(--app-text-muted);
+        font-size: 0.9rem;
       }
-    }
-  `],
+
+      .post-card__metrics span,
+      .post-card__link {
+        display: inline-flex;
+        gap: 0.35rem;
+        align-items: center;
+      }
+
+      @media (max-width: 640px) {
+        .post-card__link {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .post-card__metrics {
+          display: grid;
+        }
+      }
+    `,
+  ],
 })
 export class PostCardComponent {
   readonly post = input.required<Post>();
   readonly detailsLink = computed(() => ['/posts', this.post().id]);
-
-  onSpaceKeydown(event: KeyboardEvent): void {
-    event.preventDefault();
-    (event.currentTarget as HTMLElement | null)?.click();
-  }
 }

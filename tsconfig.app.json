@@ -5,23 +5,8 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./out-tsc/app",
-    "types": [],
-    "paths": {
-      "@core": ["./src/app/core"],
-      "@core/*": ["./src/app/core/*"],
-      "@shared": ["./src/app/shared"],
-      "@shared/*": ["./src/app/shared/*"],
-      "@features": ["./src/app/features"],
-      "@features/*": ["./src/app/features/*"],
-      "@env/": ["./src/environments/"],
-      "@env/*": ["./src/environments/*"]
-    }
+    "types": []
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "src/**/*.spec.ts"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts"]
 }
-

@@ -6,7 +6,6 @@ import {
   PageSectionHeaderComponent,
   StatusBannerComponent,
 } from '@shared/components';
-import { Todo } from '@shared/models';
 import { TodoFormComponent } from './components/todo-form.component';
 import { TodoItemComponent } from './components/todo-item.component';
 import { TodosStore, type TodosStoreInstance } from './state/todos.store';
@@ -29,23 +28,30 @@ import { TodosStore, type TodosStoreInstance } from './state/todos.store';
         <app-page-section-header
           eyebrow="DummyJSON todos"
           title="My Todos"
-          [meta]="store.completedCount() + ' of ' + store.todos().length + ' completed in your personal checklist.'"
+          [meta]="
+            store.completedCount() +
+            ' of ' +
+            store.todos().length +
+            ' completed in your personal checklist.'
+          "
           icon="task_alt"
           [chipLabel]="store.completedCount() + ' done'"
           chipVariant="warning"
         />
 
-        <app-todo-form
-          [isSaving]="store.isSaving()"
-          (addTodo)="store.addTodo($event)"
-        />
+        <app-todo-form [isSaving]="store.isSaving()" (addTodo)="store.addTodo($event)" />
 
         @if (store.errorMessage()) {
-          <app-status-banner
-            tone="error"
-            icon="error_outline"
-            [message]="store.errorMessage()"
-          />
+          <app-status-banner tone="error" icon="error_outline" [message]="store.errorMessage()">
+            <button
+              type="button"
+              class="outline-button"
+              (click)="store.loadTodos()"
+              [disabled]="store.isLoading()"
+            >
+              Try again
+            </button>
+          </app-status-banner>
         }
 
         @if (store.isLoading()) {
@@ -68,7 +74,7 @@ import { TodosStore, type TodosStoreInstance } from './state/todos.store';
           </div>
         }
 
-        @if (!store.isLoading() && store.todos().length === 0) {
+        @if (!store.isLoading() && !store.errorMessage() && store.todos().length === 0) {
           <app-empty-state
             title="No todos found"
             description="Create the first task above and it will appear in the checklist."
@@ -78,26 +84,24 @@ import { TodosStore, type TodosStoreInstance } from './state/todos.store';
       </div>
     </section>
   `,
-  styles: [`
-    .todos-page {
-      --section-color: var(--app-accent);
-      --section-color-dark: var(--app-accent-dark);
-    }
+  styles: [
+    `
+      .todos-page {
+        --section-color: var(--app-accent);
+        --section-color-dark: var(--app-accent-dark);
+      }
 
-    .todos-list {
-      display: grid;
-      gap: 0.5rem;
-    }
-  `],
+      .todos-list {
+        display: grid;
+        gap: 0.5rem;
+      }
+    `,
+  ],
 })
 export class TodosListComponent implements OnInit {
   protected readonly store: TodosStoreInstance = inject(TodosStore);
 
   ngOnInit(): void {
     this.store.loadTodos();
-  }
-
-  trackByTodoId(_index: number, todo: Todo): number {
-    return todo.id;
   }
 }

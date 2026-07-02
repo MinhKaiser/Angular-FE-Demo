@@ -1,7 +1,11 @@
 @use 'igniteui-angular/theming' as *;
 
 @include core();
-@include typography($exclude: ('charts'));
+@include typography(
+  $exclude: (
+    'charts',
+  )
+);
 @include theme(
   $default-palette,
   $exclude: (
@@ -121,10 +125,7 @@ igx-icon {
   justify-content: center;
   min-width: 1em;
   line-height: 1;
-  font-family:
-    'Material Symbols Rounded',
-    'Material Icons',
-    sans-serif;
+  font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif;
   font-style: normal;
   font-weight: 400;
   letter-spacing: normal;
@@ -327,7 +328,8 @@ app-root {
 
 .field:focus {
   border-color: var(--section-color, var(--app-primary));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--section-color, var(--app-primary)) 16%, transparent);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--section-color, var(--app-primary)) 16%, transparent);
 }
 
 @keyframes spin {

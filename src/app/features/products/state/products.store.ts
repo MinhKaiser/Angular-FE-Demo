@@ -1,6 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
-import { catchError, finalize, of } from 'rxjs';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { EMPTY, catchError, exhaustMap, finalize, switchMap, tap } from 'rxjs';
 import { ProductService } from '@core/services';
 import { Product, ProductsResponse } from '@shared/models';
 
@@ -58,7 +59,7 @@ const initialState: ProductsState = {
 const buildPaginationItems = (
   currentPage: number,
   totalPages: number,
-  siblingCount = 1
+  siblingCount = 1,
 ): PaginationItem[] => {
   if (totalPages <= 0) {
     return [];
@@ -90,13 +91,13 @@ const buildPaginationItems = (
   }
 
   const sortedPages = Array.from(pages)
-    .filter(page => page >= 1 && page <= totalPages)
+    .filter((page) => page >= 1 && page <= totalPages)
     .sort((left, right) => left - right);
 
   const items: PaginationItem[] = [];
 
   for (let index = 0; index < sortedPages.length; index += 1) {
-    const page = sortedPages[index];
+    const page = sortedPages[index]!;
     const previousPage = sortedPages[index - 1];
 
     if (previousPage && page - previousPage > 1) {
@@ -120,11 +121,12 @@ export const ProductsStore = signalStore(
   withComputed(({ currentPage, products, skip, total, totalPages }) => ({
     canGoToPreviousPage: computed(() => currentPage() > 1),
     canGoToNextPage: computed(() => currentPage() < totalPages()),
-    visibleRangeStart: computed(() => total() === 0 ? 0 : skip() + 1),
+    visibleRangeStart: computed(() => (total() === 0 ? 0 : skip() + 1)),
     visibleRangeEnd: computed(() => Math.min(skip() + products().length, total())),
     paginationItems: computed(() => buildPaginationItems(currentPage(), totalPages())),
-    paginationLabel: computed(() =>
-      `Showing ${total() === 0 ? 0 : skip() + 1}-${Math.min(skip() + products().length, total())} of ${total()} products`
+    paginationLabel: computed(
+      () =>
+        `Showing ${total() === 0 ? 0 : skip() + 1}-${Math.min(skip() + products().length, total())} of ${total()} products`,
     ),
   })),
   withMethods((store, productService = inject(ProductService)) => {
@@ -137,50 +139,61 @@ export const ProductsStore = signalStore(
       });
     };
 
-    const loadProducts = (): void => {
-      const query = {
-        limit: store.pageSize(),
-        skip: store.skip(),
-      };
-      const filters = store.filters();
-      const request = filters.searchTerm
-        ? productService.searchProducts(filters.searchTerm, query)
-        : filters.category
-          ? productService.getProductsByCategory(filters.category, query)
-          : productService.getProducts(query);
+    const loadProducts = rxMethod<void>(
+      switchMap(() => {
+        const query = {
+          limit: store.pageSize(),
+          skip: store.skip(),
+        };
+        const filters = store.filters();
+        const request = filters.searchTerm
+          ? productService.searchProducts(filters.searchTerm, query)
+          : filters.category
+            ? productService.getProductsByCategory(filters.category, query)
+            : productService.getProducts(query);
 
-      patchState(store, { isLoading: true, errorMessage: '' });
+        patchState(store, { isLoading: true, errorMessage: '' });
 
-      request.pipe(
-        catchError(() => {
-          patchState(store, { errorMessage: 'Could not load products from DummyJSON.' });
-          return of<ProductsResponse>({ products: [], total: 0, skip: 0, limit: query.limit });
-        }),
-        finalize(() => patchState(store, { isLoading: false }))
-      ).subscribe(response => {
-        const pageSize = response.limit || store.pageSize();
-        const totalPages = response.total > 0 ? Math.ceil(response.total / pageSize) : 0;
+        return request.pipe(
+          tap((response: ProductsResponse) => {
+            const pageSize = response.limit || store.pageSize();
+            const totalPages = response.total > 0 ? Math.ceil(response.total / pageSize) : 0;
 
-        patchState(store, {
-          products: response.products,
-          total: response.total,
-          skip: response.skip,
-          pageSize,
-          currentPage: totalPages === 0 ? 1 : Math.floor(response.skip / pageSize) + 1,
-          totalPages,
-        });
-      });
-    };
+            patchState(store, {
+              products: response.products,
+              total: response.total,
+              skip: response.skip,
+              pageSize,
+              currentPage: totalPages === 0 ? 1 : Math.floor(response.skip / pageSize) + 1,
+              totalPages,
+            });
+          }),
+          catchError(() => {
+            patchState(store, {
+              products: [],
+              total: 0,
+              totalPages: 0,
+              errorMessage: 'Could not load products from DummyJSON.',
+            });
+            return EMPTY;
+          }),
+          finalize(() => patchState(store, { isLoading: false })),
+        );
+      }),
+    );
 
-    const loadCategories = (): void => {
-      productService.getCategories().pipe(
-        catchError(() => of([]))
-      ).subscribe(categories => {
-        patchState(store, {
-          categories: categories.map(({ slug, name }) => ({ slug, name })),
-        });
-      });
-    };
+    const loadCategories = rxMethod<void>(
+      exhaustMap(() =>
+        productService.getCategories().pipe(
+          tap((categories) => {
+            patchState(store, {
+              categories: categories.map(({ slug, name }) => ({ slug, name })),
+            });
+          }),
+          catchError(() => EMPTY),
+        ),
+      ),
+    );
 
     return {
       loadInitialData(): void {
@@ -189,12 +202,12 @@ export const ProductsStore = signalStore(
       },
       search(searchTerm: string): void {
         patchState(store, { skip: 0, currentPage: 1 });
-        patchFilters({ searchTerm: searchTerm.trim() });
+        patchFilters({ searchTerm: searchTerm.trim(), category: '' });
         loadProducts();
       },
       filterByCategory(category: string): void {
         patchState(store, { skip: 0, currentPage: 1 });
-        patchFilters({ category });
+        patchFilters({ category, searchTerm: '' });
         loadProducts();
       },
       goToPage(page: number): void {
@@ -234,7 +247,7 @@ export const ProductsStore = signalStore(
         loadProducts();
       },
     };
-  })
+  }),
 );
 
 export type ProductsStoreInstance = InstanceType<typeof ProductsStore>;

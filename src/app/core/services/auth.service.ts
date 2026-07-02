@@ -37,24 +37,26 @@ export class AuthService {
   });
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    this.authState.update(state => ({ ...state, isLoading: true, error: null }));
+    this.authState.update((state) => ({ ...state, isLoading: true, error: null }));
 
-    return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, credentials, {
-      withCredentials: true,
-    }).pipe(
-      tap(response => {
-        this.setSession(response, response.accessToken, response.refreshToken);
-      }),
-      catchError(error => {
-        this.authState.update(state => ({
-          ...state,
-          isLoading: false,
-          error: this.getErrorMessage(error, 'Login failed'),
-        }));
-
-        return throwError(() => error);
+    return this.http
+      .post<LoginResponse>(`${this.baseUrl}/auth/login`, credentials, {
+        withCredentials: true,
       })
-    );
+      .pipe(
+        tap((response) => {
+          this.setSession(response, response.accessToken, response.refreshToken);
+        }),
+        catchError((error) => {
+          this.authState.update((state) => ({
+            ...state,
+            isLoading: false,
+            error: this.getErrorMessage(error, 'Login failed'),
+          }));
+
+          return throwError(() => error);
+        }),
+      );
   }
 
   logout(): void {
@@ -68,21 +70,23 @@ export class AuthService {
       return throwError(() => new Error('No access token available'));
     }
 
-    return this.http.get<User>(`${this.baseUrl}/auth/me`, {
-      withCredentials: true,
-    }).pipe(
-      tap(user => {
-        this.saveUserToStorage(user);
-        this.authState.update(state => ({
-          ...state,
-          user,
-        }));
-      }),
-      catchError(error => {
-        this.clearSession();
-        return throwError(() => error);
+    return this.http
+      .get<User>(`${this.baseUrl}/auth/me`, {
+        withCredentials: true,
       })
-    );
+      .pipe(
+        tap((user) => {
+          this.saveUserToStorage(user);
+          this.authState.update((state) => ({
+            ...state,
+            user,
+          }));
+        }),
+        catchError((error) => {
+          this.clearSession();
+          return throwError(() => error);
+        }),
+      );
   }
 
   refreshToken(expiresInMins?: number): Observable<RefreshTokenResponse> {
@@ -93,27 +97,29 @@ export class AuthService {
       body.refreshToken = refreshTokenValue;
     }
 
-    if (expiresInMins) {
+    if (expiresInMins !== undefined) {
       body.expiresInMins = expiresInMins;
     }
 
-    return this.http.post<RefreshTokenResponse>(`${this.baseUrl}/auth/refresh`, body, {
-      withCredentials: true,
-    }).pipe(
-      tap(response => {
-        this.saveTokensToStorage(response.accessToken, response.refreshToken);
-        this.authState.update(state => ({
-          ...state,
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken,
-          isAuthenticated: true,
-        }));
-      }),
-      catchError(error => {
-        this.clearSession();
-        return throwError(() => error);
+    return this.http
+      .post<RefreshTokenResponse>(`${this.baseUrl}/auth/refresh`, body, {
+        withCredentials: true,
       })
-    );
+      .pipe(
+        tap((response) => {
+          this.saveTokensToStorage(response.accessToken, response.refreshToken);
+          this.authState.update((state) => ({
+            ...state,
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            isAuthenticated: true,
+          }));
+        }),
+        catchError((error) => {
+          this.clearSession();
+          return throwError(() => error);
+        }),
+      );
   }
 
   getAccessToken(): string | null {
@@ -183,12 +189,20 @@ export class AuthService {
   }
 
   private saveTokensToStorage(accessToken: string, refreshToken: string): void {
-    localStorage.setItem(this.storageKeys.accessToken, accessToken);
-    localStorage.setItem(this.storageKeys.refreshToken, refreshToken);
+    try {
+      localStorage.setItem(this.storageKeys.accessToken, accessToken);
+      localStorage.setItem(this.storageKeys.refreshToken, refreshToken);
+    } catch {
+      return;
+    }
   }
 
   private saveUserToStorage(user: UserSummary): void {
-    localStorage.setItem(this.storageKeys.user, JSON.stringify(user));
+    try {
+      localStorage.setItem(this.storageKeys.user, JSON.stringify(user));
+    } catch {
+      return;
+    }
   }
 
   private loadTokenFromStorage(): string | null {
@@ -210,7 +224,12 @@ export class AuthService {
   private loadUserFromStorage(): UserSummary | null {
     try {
       const user = localStorage.getItem(this.storageKeys.user);
-      return user ? JSON.parse(user) : null;
+      if (!user) {
+        return null;
+      }
+
+      const parsedUser: unknown = JSON.parse(user);
+      return this.isUserSummary(parsedUser) ? parsedUser : null;
     } catch {
       return null;
     }
@@ -233,11 +252,42 @@ export class AuthService {
 
   private isTokenValueExpired(token: string): boolean {
     try {
-      const payload = JSON.parse(atob(this.normalizeBase64Url(token.split('.')[1])));
+      const encodedPayload = token.split('.')[1];
+      if (!encodedPayload) {
+        return true;
+      }
+
+      const payload: unknown = JSON.parse(atob(this.normalizeBase64Url(encodedPayload)));
+      if (
+        typeof payload !== 'object' ||
+        payload === null ||
+        !('exp' in payload) ||
+        typeof payload.exp !== 'number'
+      ) {
+        return true;
+      }
+
       return Date.now() >= payload.exp * 1000;
     } catch {
       return true;
     }
+  }
+
+  private isUserSummary(value: unknown): value is UserSummary {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+
+    return (
+      'id' in value &&
+      typeof value.id === 'number' &&
+      'username' in value &&
+      typeof value.username === 'string' &&
+      'firstName' in value &&
+      typeof value.firstName === 'string' &&
+      'lastName' in value &&
+      typeof value.lastName === 'string'
+    );
   }
 
   private getErrorMessage(error: unknown, fallback: string): string {

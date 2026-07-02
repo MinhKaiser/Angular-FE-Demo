@@ -1,14 +1,24 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { LoadingStateComponent, PageBackLinkComponent, StatusBannerComponent } from '@shared/components';
+import {
+  LoadingStateComponent,
+  PageBackLinkComponent,
+  StatusBannerComponent,
+} from '@shared/components';
 import { ProductDetailViewComponent } from './components/product-detail-view.component';
 import { ProductDetailStore, type ProductDetailStoreInstance } from './state/product-detail.store';
 
 @Component({
   selector: 'app-product-detail',
-  imports: [CommonModule, ProductDetailViewComponent, PageBackLinkComponent, StatusBannerComponent, LoadingStateComponent],
+  imports: [
+    CommonModule,
+    ProductDetailViewComponent,
+    PageBackLinkComponent,
+    StatusBannerComponent,
+    LoadingStateComponent,
+  ],
   providers: [ProductDetailStore],
   template: `
     <section class="app-page product-detail-page">
@@ -16,11 +26,16 @@ import { ProductDetailStore, type ProductDetailStoreInstance } from './state/pro
         <app-page-back-link to="/products" label="Back to products" />
 
         @if (store.errorMessage()) {
-          <app-status-banner
-            tone="error"
-            icon="error_outline"
-            [message]="store.errorMessage()"
-          />
+          <app-status-banner tone="error" icon="error_outline" [message]="store.errorMessage()">
+            <button
+              type="button"
+              class="outline-button"
+              (click)="store.reload()"
+              [disabled]="store.isLoading()"
+            >
+              Try again
+            </button>
+          </app-status-banner>
         }
 
         @if (store.isLoading()) {
@@ -31,34 +46,28 @@ import { ProductDetailStore, type ProductDetailStoreInstance } from './state/pro
         }
 
         @if (!store.isLoading() && store.product()) {
-          <app-product-detail-view
-            [product]="store.product()!"
-          />
+          <app-product-detail-view [product]="store.product()!" />
         }
       </div>
     </section>
   `,
-  styles: [`
-    .product-detail-page {
-      --section-color: var(--app-primary);
-      --section-color-dark: var(--app-primary-dark);
-    }
-  `],
+  styles: [
+    `
+      .product-detail-page {
+        --section-color: var(--app-primary);
+        --section-color-dark: var(--app-primary-dark);
+      }
+    `,
+  ],
 })
-export class ProductDetailComponent implements OnInit, OnDestroy {
+export class ProductDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly store: ProductDetailStoreInstance = inject(ProductDetailStore);
-  private readonly subscriptions = new Subscription();
 
   ngOnInit(): void {
-    this.subscriptions.add(
-      this.route.paramMap.subscribe(paramMap => {
-        this.store.loadProduct(Number(paramMap.get('id')));
-      })
-    );
-  }
-
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((paramMap) => {
+      this.store.loadProduct(Number(paramMap.get('id')));
+    });
   }
 }

@@ -40,7 +40,10 @@ export class ProductService {
     return this.httpClient.get<string[]>('/products/category-list');
   }
 
-  getProductsByCategory(categorySlug: string, query?: PaginationQuery): Observable<ProductsResponse> {
+  getProductsByCategory(
+    categorySlug: string,
+    query?: PaginationQuery,
+  ): Observable<ProductsResponse> {
     return this.httpClient.get<ProductsResponse>(`/products/category/${categorySlug}`, query);
   }
 

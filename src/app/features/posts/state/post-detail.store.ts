@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { catchError, finalize, forkJoin, of } from 'rxjs';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { EMPTY, catchError, finalize, forkJoin, switchMap, tap } from 'rxjs';
 import { PostService } from '@core/services';
 import { Comment, Post } from '@shared/models';
 
@@ -20,37 +21,60 @@ const initialState: PostDetailState = {
 
 export const PostDetailStore = signalStore(
   withState(initialState),
-  withMethods((store, postService = inject(PostService)) => ({
-    loadPost(postId: number): void {
-      if (!Number.isInteger(postId) || postId <= 0) {
+  withMethods((store, postService = inject(PostService)) => {
+    let currentPostId: number | null = null;
+
+    const loadPostRequest = rxMethod<number>(
+      switchMap((postId) => {
         patchState(store, {
-          isLoading: false,
-          errorMessage: 'Invalid post id.',
+          post: null,
+          comments: [],
+          isLoading: true,
+          errorMessage: '',
         });
-        return;
-      }
 
-      patchState(store, { isLoading: true, errorMessage: '' });
+        return forkJoin({
+          post: postService.getPost(postId),
+          comments: postService.getPostComments(postId),
+        }).pipe(
+          tap((result) => {
+            patchState(store, {
+              post: result.post,
+              comments: result.comments.comments,
+            });
+          }),
+          catchError(() => {
+            patchState(store, { errorMessage: 'Could not load post details.' });
+            return EMPTY;
+          }),
+          finalize(() => patchState(store, { isLoading: false })),
+        );
+      }),
+    );
 
-      forkJoin({
-        post: postService.getPost(postId),
-        comments: postService.getPostComments(postId),
-      }).pipe(
-        catchError(() => {
-          patchState(store, { errorMessage: 'Could not load post details.' });
-          return of(null);
-        }),
-        finalize(() => patchState(store, { isLoading: false }))
-      ).subscribe(result => {
-        if (!result) return;
+    return {
+      loadPost(postId: number): void {
+        if (!Number.isInteger(postId) || postId <= 0) {
+          currentPostId = null;
+          patchState(store, {
+            post: null,
+            comments: [],
+            isLoading: false,
+            errorMessage: 'Invalid post id.',
+          });
+          return;
+        }
 
-        patchState(store, {
-          post: result.post,
-          comments: result.comments.comments,
-        });
-      });
-    },
-  }))
+        currentPostId = postId;
+        loadPostRequest(postId);
+      },
+      reload(): void {
+        if (currentPostId !== null) {
+          loadPostRequest(currentPostId);
+        }
+      },
+    };
+  }),
 );
 
 export type PostDetailStoreInstance = InstanceType<typeof PostDetailStore>;

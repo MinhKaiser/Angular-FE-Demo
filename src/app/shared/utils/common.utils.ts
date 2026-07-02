@@ -20,7 +20,7 @@ export const truncateText = (text: string, maxLength: number): string => {
 
 export const debounce = <TArgs extends unknown[]>(
   func: (...args: TArgs) => void,
-  wait: number
+  wait: number,
 ): ((...args: TArgs) => void) => {
   let timeout: ReturnType<typeof setTimeout>;
   return (...args: TArgs) => {

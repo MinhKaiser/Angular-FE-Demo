@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { catchError, finalize, of } from 'rxjs';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { EMPTY, catchError, exhaustMap, finalize, switchMap, tap } from 'rxjs';
 import { PostService } from '@core/services';
 import { Post, PostsResponse, PostTag } from '@shared/models';
 
@@ -42,36 +43,46 @@ export const PostsStore = signalStore(
       });
     };
 
-    const loadPosts = (): void => {
-      const query = { limit: 20, skip: 0 };
-      const filters = store.filters();
-      const request = filters.searchTerm
-        ? postService.searchPosts(filters.searchTerm, query)
-        : filters.tag
-          ? postService.getPostsByTag(filters.tag, query)
-          : postService.getPosts(query);
+    const loadPosts = rxMethod<void>(
+      switchMap(() => {
+        const query = { limit: 20, skip: 0 };
+        const filters = store.filters();
+        const request = filters.searchTerm
+          ? postService.searchPosts(filters.searchTerm, query)
+          : filters.tag
+            ? postService.getPostsByTag(filters.tag, query)
+            : postService.getPosts(query);
 
-      patchState(store, { isLoading: true, errorMessage: '' });
+        patchState(store, { isLoading: true, errorMessage: '' });
 
-      request.pipe(
-        catchError(() => {
-          patchState(store, { errorMessage: 'Could not load posts from DummyJSON.' });
-          return of<PostsResponse>({ posts: [], total: 0, skip: 0, limit: query.limit });
-        }),
-        finalize(() => patchState(store, { isLoading: false }))
-      ).subscribe(response => {
-        patchState(store, {
-          posts: response.posts,
-          total: response.total,
-        });
-      });
-    };
+        return request.pipe(
+          tap((response: PostsResponse) => {
+            patchState(store, {
+              posts: response.posts,
+              total: response.total,
+            });
+          }),
+          catchError(() => {
+            patchState(store, {
+              posts: [],
+              total: 0,
+              errorMessage: 'Could not load posts from DummyJSON.',
+            });
+            return EMPTY;
+          }),
+          finalize(() => patchState(store, { isLoading: false })),
+        );
+      }),
+    );
 
-    const loadTags = (): void => {
-      postService.getPostTags().pipe(
-        catchError(() => of([]))
-      ).subscribe(tags => patchState(store, { tags }));
-    };
+    const loadTags = rxMethod<void>(
+      exhaustMap(() =>
+        postService.getPostTags().pipe(
+          tap((tags) => patchState(store, { tags })),
+          catchError(() => EMPTY),
+        ),
+      ),
+    );
 
     return {
       loadInitialData(): void {
@@ -79,18 +90,18 @@ export const PostsStore = signalStore(
         loadPosts();
       },
       search(searchTerm: string): void {
-        patchFilters({ searchTerm: searchTerm.trim() });
+        patchFilters({ searchTerm: searchTerm.trim(), tag: '' });
         loadPosts();
       },
       filterByTag(tag: string): void {
-        patchFilters({ tag });
+        patchFilters({ tag, searchTerm: '' });
         loadPosts();
       },
       reload(): void {
         loadPosts();
       },
     };
-  })
+  }),
 );
 
 export type PostsStoreInstance = InstanceType<typeof PostsStore>;

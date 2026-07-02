@@ -21,56 +21,58 @@ import { IgxIconModule } from 'igniteui-angular/icon';
       </div>
     </footer>
   `,
-  styles: [`
-    .site-footer {
-      border-top: 1px solid var(--app-border-soft);
-      background: var(--app-surface);
-    }
+  styles: [
+    `
+      .site-footer {
+        border-top: 1px solid var(--app-border-soft);
+        background: var(--app-surface);
+      }
 
-    .site-footer__inner {
-      display: flex;
-      width: min(100% - (var(--app-shell-gutter) * 2), 1120px);
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      margin-inline: auto;
-      padding-block: 1.5rem;
-      color: var(--app-text-muted);
-      font-size: 0.9rem;
-    }
-
-    .site-footer__brand,
-    .site-footer__links {
-      display: flex;
-      align-items: center;
-    }
-
-    .site-footer__brand {
-      gap: 0.6rem;
-    }
-
-    .site-footer__inner p {
-      margin: 0;
-    }
-
-    .site-footer__links {
-      gap: 1rem;
-    }
-
-    .site-footer__links a {
-      text-decoration: none;
-    }
-
-    @media (max-width: 600px) {
       .site-footer__inner {
-        align-items: flex-start;
-        flex-direction: column;
+        display: flex;
+        width: min(100% - (var(--app-shell-gutter) * 2), 1120px);
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-inline: auto;
+        padding-block: 1.5rem;
+        color: var(--app-text-muted);
+        font-size: 0.9rem;
+      }
+
+      .site-footer__brand,
+      .site-footer__links {
+        display: flex;
+        align-items: center;
+      }
+
+      .site-footer__brand {
+        gap: 0.6rem;
+      }
+
+      .site-footer__inner p {
+        margin: 0;
       }
 
       .site-footer__links {
-        flex-wrap: wrap;
+        gap: 1rem;
       }
-    }
-  `],
+
+      .site-footer__links a {
+        text-decoration: none;
+      }
+
+      @media (max-width: 600px) {
+        .site-footer__inner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .site-footer__links {
+          flex-wrap: wrap;
+        }
+      }
+    `,
+  ],
 })
 export class FooterComponent {}

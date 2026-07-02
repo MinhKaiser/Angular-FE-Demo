@@ -5,7 +5,8 @@
         <p class="page-heading__eyebrow">Ignite UI workspace</p>
         <h1>Ignite UI dashboard with real component variety</h1>
         <p class="page-heading__meta">
-          Select, combo, drop-down, slider, grid, icon and progress visuals are all running on live app data.
+          Select, combo, drop-down, slider, grid, icon and progress visuals are all running on live
+          app data.
         </p>
       </div>
 
@@ -129,9 +130,7 @@
             >
               <label igxLabel>Category</label>
 
-              <igx-select-item value="all">
-                All categories
-              </igx-select-item>
+              <igx-select-item value="all"> All categories </igx-select-item>
 
               @for (category of store.categories(); track category) {
                 <igx-select-item [value]="category">
@@ -216,11 +215,7 @@
               <strong>{{ catalogCoverage() }}%</strong>
             </div>
 
-            <igx-linear-bar
-              [max]="100"
-              [value]="catalogCoverage()"
-              type="info"
-            ></igx-linear-bar>
+            <igx-linear-bar [max]="100" [value]="catalogCoverage()" type="info"></igx-linear-bar>
           </div>
 
           <div class="linear-metric">
@@ -229,11 +224,7 @@
               <strong>{{ stockReadiness() }}%</strong>
             </div>
 
-            <igx-linear-bar
-              [max]="100"
-              [value]="stockReadiness()"
-              type="success"
-            ></igx-linear-bar>
+            <igx-linear-bar [max]="100" [value]="stockReadiness()" type="success"></igx-linear-bar>
           </div>
         </div>
       </article>
@@ -250,9 +241,7 @@
       </div>
 
       @if (store.isLoading()) {
-        <div class="dashboard-loading">
-          Loading dashboard data...
-        </div>
+        <div class="dashboard-loading">Loading dashboard data...</div>
       }
 
       @if (!store.isLoading()) {

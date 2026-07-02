@@ -1,8 +1,9 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
-import { catchError, finalize, of } from 'rxjs';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { EMPTY, catchError, exhaustMap, finalize, mergeMap, switchMap, tap } from 'rxjs';
 import { AuthService, TodoService } from '@core/services';
-import { Todo, TodosResponse } from '@shared/models';
+import { Todo } from '@shared/models';
 
 interface TodosState {
   todos: Todo[];
@@ -10,6 +11,11 @@ interface TodosState {
   isSaving: boolean;
   errorMessage: string;
   updatingTodoIds: ReadonlySet<number>;
+}
+
+interface ToggleTodoCommand {
+  todo: Todo;
+  completed: boolean;
 }
 
 const initialState: TodosState = {
@@ -23,7 +29,7 @@ const initialState: TodosState = {
 export const TodosStore = signalStore(
   withState(initialState),
   withComputed(({ todos }) => ({
-    completedCount: computed(() => todos().filter(todo => todo.completed).length),
+    completedCount: computed(() => todos().filter((todo) => todo.completed).length),
   })),
   withMethods((store, todoService = inject(TodoService), authService = inject(AuthService)) => {
     const setUpdating = (todoId: number, isUpdating: boolean): void => {
@@ -37,92 +43,120 @@ export const TodosStore = signalStore(
       patchState(store, { updatingTodoIds: nextUpdatingIds });
     };
 
-    return {
-      loadTodos(): void {
+    const loadTodosRequest = rxMethod<void>(
+      switchMap(() => {
         const user = authService.user();
         if (!user) {
           patchState(store, {
+            todos: [],
             errorMessage: 'Please sign in to load todos.',
             isLoading: false,
           });
-          return;
+          return EMPTY;
         }
 
         patchState(store, { isLoading: true, errorMessage: '' });
 
-        todoService.getTodosByUser(user.id, { limit: 50, skip: 0 }).pipe(
+        return todoService.getTodosByUser(user.id, { limit: 50, skip: 0 }).pipe(
+          tap((response) => patchState(store, { todos: response.todos })),
           catchError(() => {
-            patchState(store, { errorMessage: 'Could not load todos from DummyJSON.' });
-            return of<TodosResponse>({ todos: [], total: 0, skip: 0, limit: 50 });
+            patchState(store, {
+              todos: [],
+              errorMessage: 'Could not load todos from DummyJSON.',
+            });
+            return EMPTY;
           }),
-          finalize(() => patchState(store, { isLoading: false }))
-        ).subscribe(response => patchState(store, { todos: response.todos }));
-      },
-      addTodo(todoText: string): void {
+          finalize(() => patchState(store, { isLoading: false })),
+        );
+      }),
+    );
+
+    const addTodoRequest = rxMethod<string>(
+      exhaustMap((todoText) => {
         const user = authService.user();
         const normalizedTodo = todoText.trim();
 
         if (!user || !normalizedTodo) {
-          return;
+          return EMPTY;
         }
 
         patchState(store, { isSaving: true, errorMessage: '' });
 
-        todoService.addTodo({
-          todo: normalizedTodo,
-          completed: false,
-          userId: user.id,
-        }).pipe(
-          catchError(() => {
-            patchState(store, { errorMessage: 'Could not create todo.' });
-            return of(null);
-          }),
-          finalize(() => patchState(store, { isSaving: false }))
-        ).subscribe(todo => {
-          if (!todo) return;
+        return todoService
+          .addTodo({
+            todo: normalizedTodo,
+            completed: false,
+            userId: user.id,
+          })
+          .pipe(
+            tap((todo) => patchState(store, { todos: [todo, ...store.todos()] })),
+            catchError(() => {
+              patchState(store, { errorMessage: 'Could not create todo.' });
+              return EMPTY;
+            }),
+            finalize(() => patchState(store, { isSaving: false })),
+          );
+      }),
+    );
 
-          patchState(store, { todos: [todo, ...store.todos()] });
-        });
-      },
-      toggleTodo(todo: Todo, completed: boolean): void {
+    const toggleTodoRequest = rxMethod<ToggleTodoCommand>(
+      mergeMap(({ todo, completed }) => {
         setUpdating(todo.id, true);
         patchState(store, { errorMessage: '' });
 
-        todoService.updateTodo(todo.id, { completed }).pipe(
+        return todoService.updateTodo(todo.id, { completed }).pipe(
+          tap((updatedTodo) => {
+            patchState(store, {
+              todos: store.todos().map((item) => (item.id === todo.id ? updatedTodo : item)),
+            });
+          }),
           catchError(() => {
             patchState(store, { errorMessage: 'Could not update todo.' });
-            return of({ ...todo, completed: todo.completed });
+            return EMPTY;
           }),
-          finalize(() => setUpdating(todo.id, false))
-        ).subscribe(updatedTodo => {
-          patchState(store, {
-            todos: store.todos().map(item => item.id === todo.id ? updatedTodo : item),
-          });
-        });
-      },
-      deleteTodo(todo: Todo): void {
+          finalize(() => setUpdating(todo.id, false)),
+        );
+      }),
+    );
+
+    const deleteTodoRequest = rxMethod<Todo>(
+      mergeMap((todo) => {
         setUpdating(todo.id, true);
         patchState(store, { errorMessage: '' });
 
-        todoService.deleteTodo(todo.id).pipe(
+        return todoService.deleteTodo(todo.id).pipe(
+          tap(() => {
+            patchState(store, {
+              todos: store.todos().filter((item) => item.id !== todo.id),
+            });
+          }),
           catchError(() => {
             patchState(store, { errorMessage: 'Could not delete todo.' });
-            return of(null);
+            return EMPTY;
           }),
-          finalize(() => setUpdating(todo.id, false))
-        ).subscribe(response => {
-          if (!response) return;
+          finalize(() => setUpdating(todo.id, false)),
+        );
+      }),
+    );
 
-          patchState(store, {
-            todos: store.todos().filter(item => item.id !== todo.id),
-          });
-        });
+    return {
+      loadTodos(): void {
+        loadTodosRequest();
+      },
+      addTodo(todoText: string): void {
+        addTodoRequest(todoText);
+      },
+      toggleTodo(todo: Todo, completed: boolean): void {
+        toggleTodoRequest({ todo, completed });
+      },
+      deleteTodo(todo: Todo): void {
+        deleteTodoRequest(todo);
       },
       isUpdating(todoId: number): boolean {
         return store.updatingTodoIds().has(todoId);
       },
     };
-  })
+  }),
 );
 
 export type TodosStoreInstance = InstanceType<typeof TodosStore>;

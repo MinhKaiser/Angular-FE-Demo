@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
+import { catchError, throwError, TimeoutError } from 'rxjs';
 import { DevDiagnosticsService } from '@core/services';
 import { getEnvironmentConfig } from '@core/services/environment.service';
 
@@ -16,7 +16,22 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
   const diagnostics = inject(DevDiagnosticsService);
 
   return next(request).pipe(
-    catchError(error => {
+    catchError((error) => {
+      if (error instanceof TimeoutError) {
+        const apiError: ApiError = {
+          status: 0,
+          message: `Request timed out after ${config.apiTimeout / 1000} seconds.`,
+          url: request.url,
+          raw: error,
+        };
+
+        if (config.debug) {
+          diagnostics.reportHttp(apiError);
+        }
+
+        return throwError(() => apiError);
+      }
+
       if (!(error instanceof HttpErrorResponse)) {
         return throwError(() => error);
       }
@@ -34,7 +49,7 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
       }
 
       return throwError(() => apiError);
-    })
+    }),
   );
 };
 
